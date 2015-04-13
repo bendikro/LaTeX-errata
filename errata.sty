@@ -12,7 +12,7 @@
 \newif\iffoots\footsfalse
 \newif\ifrecord\recordfalse
 \DeclareOption{show}{\marginstrue\footstrue}
-\DeclareOption{hide}{}
+\DeclareOption{hide}{\marginsfalse\footsfalse}
 \DeclareOption{margins}{\marginstrue}
 \DeclareOption{foots}{\footstrue}
 \DeclareOption{record}{\recordtrue}
@@ -39,19 +39,19 @@
 \newenvironment{errata}{\begin{description}}{\end{description}}
 \newcommand{\erratumAdd}[3][]% keyvals, explanation, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#3]$_a^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}}
 \newcommand{\erratumDelete}[3][]% keyvals, explanation, old
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 []$_d^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}}
 \newcommand{\erratumReplace}[4][]% keyvals, explanation, old, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#4]$_r^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}}
@@ -59,7 +59,8 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}
 \edef\new@number{\theerratum}\message{Erratum \new@number!}
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum}%
-\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}\marginpar{BErr(\new@number)}\fi
+\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}
+\ifmargins\marginpar{BErr(\new@number)}\fi\fi
 \record@erratum{#2}
 \def\eAdd##1{[##1]$_a$}%
 \def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\@footnotetext{deleted: ##1}}%

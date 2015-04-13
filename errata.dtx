@@ -19,11 +19,9 @@
 \DoNotIndex{\def,\long,\edef,\xdef,\gdef,\let,\global}
 \DoNotIndex{\begin,\AtEndDocument,\newcommand,\newcounter,\stepcounter}
 \DoNotIndex{\immediate,\openout,\closeout,\message,\typeout}
-\DoNotIndex{\section,\scshape,\arabic}
-
 \EnableCrossrefs
 %\CodelineIndex
-%\OnlyDescription
+%\OnlyDescr3iption
 \RecordChanges
 \usepackage{textcomp,url,float,a4wide}
 \usepackage[show]{ed}
@@ -39,7 +37,7 @@
 %</driver>
 % \fi
 % 
-%\CheckSum{191}
+%\CheckSum{201}
 % 
 % \changes{v0.1}{2006/07/18}{First Version with Documentation}
 % \changes{v0.2}{2006/08/01}{More Documentation and Keywords Management}
@@ -84,8 +82,8 @@
 % given), then errata markup is totally invisible in the formatted document.  The
 % \DescribeMacro{margins}|margins| and \DescribeMacro{foots}|foots| options give finer
 % control. If the |margins| (|foots|) option is not given, then margin decorations
-% (explanatory footnotes) are not generated.  The |hide| option is equivalent to |margins|
-% and |foots|.
+% (explanatory footnotes) are not generated.  The |show| option is equivalent to |margins|
+% and |foots|, the |hide| option overrides both.
 % 
 % If the \DescribeMacro{record}|record| option is specified, then errata are written to a
 % special file \meta{jobname}|-errata.tex| so that they can be included in an errata
@@ -93,17 +91,17 @@
 %
 % There are two kinds of errata, short ones or extended ones. We will go into them in the
 % next two subsections. All the errata macros take optional KeyVal arguments that specify
-% the metadata for the errata. \DescribeMacro{date=}We can specify the date when the
-% erratum was found, with the |date| key and\DescribeMacro{reported-by=} the person that
-% reported the erratum with with the |reported-by| key. Consider for instance the metadata
+% the metadata for the errata. We can specify the date when the erratum was found, with
+% the \DescribeMacro{date=}|date| key and the person that reported the erratum with with
+% the \DescribeMacro{reported-by=}|reported-by| key. Consider for instance the metadata
 % for the erratum in Example~\ref{fig:extended-erratum}; The date format follows the ISO
 % 8601 norm: it is of the form \meta{YYYY}|-|\meta{MM}|-|\meta{DD}, where \meta{YYYY} is
 % the 4-digit year, \meta{MM} the 2-digit month, and {\meta{DD}} the two-digit day of the
-% month. The format of the |reported-by| field is free\footnote{Remember to wrap the value
-% in curly braces if the name contains a comma}. \DescribeMacro{id=}We can specify an
-% identifier for the erratum using the |id| key, so that we can refer back to it
-% later. \DescribeMacro{type=}Finally, we can use the |type| key to specify the type
-% (e.g. ``clarification'') of an erratum.
+% month. The format of the |reported-by| field is a free-form text\footnote{Remember to
+% wrap the value in curly braces if the name contains a comma}. We can specify an
+% identifier for the erratum using the \DescribeMacro{id=}|id| key, so that we can refer
+% back to it later. Finally, we can use the \DescribeMacro{type=}|type| key to specify the
+% type (e.g. ``clarification'') of an erratum.
 %
 % \subsection{Short Errata}
 % 
@@ -120,18 +118,17 @@
 % \caption{Some short errata}\label{fig:short-errata}
 % \end{exfig}
 % 
-% \DescribeMacro{\erratumAdd} |\erratumAdd| marks up a correction by adding some text. The
+% \DescribeMacro{\erratumAdd}|\erratumAdd| marks up a correction by adding some text. The
 % first argument holds the explanation of the intended correction and the second one the
 % new text.
 % 
-% \DescribeMacro{\erratumDelete} |\erratumDelete| does the same for a correction by
+% \DescribeMacro{\erratumDelete}|\erratumDelete| does the same for a correction by
 % deleting some text; here the second argument holds the deleted text. While the
 % |\erratumAdd| will copy the contents of the second argument to the result document,
 % |\erratumDelete| does not. 
 % 
-% \DescribeMacro{\erratumReplace}
-% |\erratumReplace{[|\meta{keys}|]|\meta{desc}|}{|\meta{old}|}{|\meta{new}|}| replaces
-% {\meta{old}} with {\meta{new}} in the result document.
+% \DescribeMacro{\erratumReplace}|\erratumReplace{[|\meta{keys}|]|\meta{desc}|}{|\meta{old}|}{|\meta{new}|}|
+% replaces {\meta{old}} with {\meta{new}} in the result document.
 % 
 % All of these macros mark the location of the errata in the margin and document the
 % changes in footnote-like structures. For instance, the text fragment above would be
@@ -144,8 +141,8 @@
 %
 % \subsection{Extended Errata}
 %
-% \DescribeEnv{erratum} Extended errata group multiple editing operations into a coherent
-% group via the |erratum| environment. The first argument of this environment is an
+% Extended errata group multiple editing operations into a coherent group via the
+% \DescribeEnv{erratum}|erratum| environment. The first argument of this environment is an
 % explanation as for the short errata above. The |erratum| environment provides local
 % versions of the editing markup macros, which behave like those, but lack the first
 % (explanation) argument, which is already given in the environment that contains them.
@@ -184,16 +181,16 @@
 %
 % \subsection{Generating Statistics and Errata Documents}\label{sec:generating}
 %
-% \DescribeMacro{\erratamessage} Putting the macro |\erratamessage| just before the
+% Putting the macro \DescribeMacro{\erratamessage}|\erratamessage| just before the
 % |\end||{document}| will generate a message with cardinality information for the errata
 % into the log file.
 % 
-% \DescribeMacro{\erratumItem} Errata can be marked up using the |\erratumItem| macro in
-% the the\DescribeEnv{errata} |errata| environment. The |\erratumItem| takes two
-% arguments, the first is a reference to where the erratum occurred, and the second one
-% the explanation.
+% Errata can be marked up using the \DescribeMacro{\erratumItem}|\erratumItem| macro in
+% the the\DescribeEnv{errata}|errata| environment. The |\erratumItem| takes two arguments,
+% the first is a reference to where the erratum occurred, and the second one the
+% explanation.
 %
-% \DescribeMacro{\printerrata} The |\printerrata| command allows to print the errata for
+% The \DescribeMacro{\printerrata}|\printerrata| command allows to print the errata for
 % another document. This command is useful when generating errata documents for published
 % works. Say we have a book with a driver file |thebook.tex|, into which we have
 % incorporated errata markup using the infrastructure detailed above. Then we have a new
@@ -226,13 +223,13 @@
 %
 % In the errata document in Figure~\ref{fig:sample-errata-document} we postulate that we
 % keep an updated version of The Book online\footnote{And indeed it is good practice to do
-%   so if the copyright agreement with the publisher allows this.} using the
-% infrastructure provide by the |errata| package. \DescribeMacro{\printerrata} In the
-% updated version of |thebook.tex|, it can be useful to tabulate the errata as well,
-% e.g. in a section in the appendix. This can be done by the |\PrintErrata| command. Note
-% that this command needs to close the errata file |thebook-errata.tex| therefore we need
-% a |\newpage| to clear the queue of waiting |\writes| before |thebook-errata.tex| can be
-% loaded (otherwise we may be missing the errata from the last page). 
+% so if the copyright agreement with the publisher allows this.} using the infrastructure
+% provide by the |errata| package. In the updated version of |thebook.tex|, it can be
+% useful to tabulate the errata as well, e.g. in a section in the appendix. This can be
+% done by the \DescribeMacro{\printerrata}|\PrintErrata| command. Note that this command
+% needs to close the errata file |thebook-errata.tex| therefore we need a |\newpage| to
+% clear the queue of waiting |\writes| before |thebook-errata.tex| can be loaded
+% (otherwise we may be missing the errata from the last page).
 %
 % \StopEventually{\newpage\PrintChanges\newpage\section{The Errata of this Document}\printerrata{errata}}
 %
@@ -251,7 +248,7 @@
 % the next step is to declare the package options, they just set the switches accordingly.
 %    \begin{macrocode}
 \DeclareOption{show}{\marginstrue\footstrue}
-\DeclareOption{hide}{}
+\DeclareOption{hide}{\marginsfalse\footsfalse}
 \DeclareOption{margins}{\marginstrue}
 \DeclareOption{foots}{\footstrue}
 \DeclareOption{record}{\recordtrue}
@@ -337,7 +334,7 @@
 %    \begin{macrocode}
 \newcommand{\erratumAdd}[3][]% keyvals, explanation, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#3]$_a^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}}
@@ -348,7 +345,7 @@
 %    \begin{macrocode}
 \newcommand{\erratumDelete}[3][]% keyvals, explanation, old
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 []$_d^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}}
@@ -359,7 +356,7 @@
 %    \begin{macrocode}
 \newcommand{\erratumReplace}[4][]% keyvals, explanation, old, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\marginpar{Err(\arabic{erratum})}\immediate\typeout{Erratum!}%
+\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#4]$_r^{\arabic{erratum}}$%
 \footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}}
@@ -376,7 +373,8 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}
 \edef\new@number{\theerratum}\message{Erratum \new@number!}
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum}%
-\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}\marginpar{BErr(\new@number)}\fi
+\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}
+\ifmargins\marginpar{BErr(\new@number)}\fi\fi
 \record@erratum{#2}
 %    \end{macrocode}
 % \begin{macro}{\eAdd}
