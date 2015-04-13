@@ -1,8 +1,8 @@
 PACKAGE = errata
-all: errata.pdf
+all: $(PACKAGE).pdf
 
-errata.sty: errata.dtx errata.ins
-	pdflatex errata.ins
+$(PACKAGE).sty: $(PACKAGE).dtx $(PACKAGE).ins
+	pdflatex $(PACKAGE).ins
 
-errata.pdf: errata.dtx errata.sty
-	pdflatex errata.dtx
+$(PACKAGE).pdf: $(PACKAGE).dtx $(PACKAGE).sty
+	pdflatex $(PACKAGE).dtx
