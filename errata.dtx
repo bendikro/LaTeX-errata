@@ -240,12 +240,13 @@
 % \section{The Implementation} 
 %
 % The implementation is rather standard. We first set up the options for the package. The
-% main switches are |\ifmargins| and |\iffoots|, which govern the visibility of the
-% annotations in the margins and the footnotes.
+% main switches are |\ifmargins|, |\iffoots|, and |\ifmark|, which govern the visibility
+% of the errata markup and the annotations in the margins and the footnotes.
 %    \begin{macrocode}
 %<*package>
 \newif\ifmargins\marginsfalse
 \newif\iffoots\footsfalse
+\newif\ifmark\markfalse
 \newif\ifrecord\recordfalse
 %    \end{macrocode}
 % the next step is to declare the package options, they just set the switches accordingly.
@@ -254,6 +255,7 @@
 \DeclareOption{hide}{\marginsfalse\footsfalse}
 \DeclareOption{margins}{\marginstrue}
 \DeclareOption{foots}{\footstrue}
+\DeclareOption{mark}{\marktrue}
 \DeclareOption{record}{\recordtrue}
 \ProcessOptions
 %    \end{macrocode}
@@ -338,7 +340,7 @@
 \newcommand{\erratumAdd}[3][]% keyvals, explanation, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-[#3]$_a^{\arabic{erratum}}$%
+\ifmark[\fi #3\ifmark]$_a^{\arabic{erratum}}$\fi%
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}\fi}
 %    \end{macrocode}
@@ -349,7 +351,7 @@
 \newcommand{\erratumDelete}[3][]% keyvals, explanation, old
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-[]$_d^{\arabic{erratum}}$%
+\ifmark[]$_d^{\arabic{erratum}}$\else\ignorespaces\fi%
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}\fi}
 %    \end{macrocode}
@@ -360,7 +362,7 @@
 \newcommand{\erratumReplace}[4][]% keyvals, explanation, old, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-[#4]$_r^{\arabic{erratum}}$%
+\ifmark[\fi #4\ifmark]$_r^{\arabic{erratum}}$\fi%
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
 \@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}\fi}
 %    \end{macrocode}
@@ -373,12 +375,12 @@
 % margins (if desired) and sets up local macros
 %    \begin{macrocode}
 \newenvironment{erratum}[2][]% keys, explanation
-{\setkeys{erratum}{#1}\stepcounter{erratum}
-\edef\new@number{\theerratum}\message{Erratum \new@number!}
+{\setkeys{erratum}{#1}\stepcounter{erratum}%
+\edef\new@number{\theerratum}\message{Erratum \new@number!}%
 \iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum}%
-\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}
-\ifmargins\marginpar{BErr(\new@number)}\fi\fi
-\record@erratum{#2}
+\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}%
+\ifmargins\marginpar{BErr(\new@number)}\fi\fi%
+\record@erratum{#2}%
 %    \end{macrocode}
 % \begin{macro}{\eAdd}
 % This macro just passes through the argument, and delimits it, so that the extent
@@ -397,7 +399,9 @@
 % This macro just passes through the second argument, delimits it and marks the
 % replacement in a footnote. 
 %    \begin{macrocode}
-\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\iffoots\@footnotetext{was: ##1}\fi}}%
+\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\iffoots\@footnotetext{was:
+    ##1}\fi}%
+\ignorespaces}
 %    \end{macrocode}
 % \end{macro}
 % The end part of the |erratum| environment is almost trivial, it only marks the margin
@@ -412,7 +416,7 @@
 % This macro is used by the local macros of the |erratum| environment, it sets the
 % footnote label by redefining the {\LaTeX}-internal |\@thefnmark| macro appropriately. 
 %    \begin{macrocode}
-\def\erratum@mark{\stepcounter{erratum@note}{}
+\def\erratum@mark{\stepcounter{erratum@note}{}%
 \def\@thefnmark{\arabic{erratum}:\arabic{erratum@note}}}
 %    \end{macrocode}
 % \end{macro}
