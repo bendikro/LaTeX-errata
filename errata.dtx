@@ -37,7 +37,7 @@
 %</driver>
 % \fi
 % 
-%\CheckSum{247}
+%\CheckSum{251}
 % 
 % \changes{v0.1}{2006/07/18}{First Version with Documentation}
 % \changes{v0.2}{2006/08/01}{More Documentation and Keywords Management}
@@ -87,9 +87,10 @@
 % \DescribeMacro{mark}|mark|, \DescribeMacro{margins}|margins|, and
 % \DescribeMacro{foots}|foots| options give finer control together with their negative
 % variants |nomark|, |nomargins|, and |nofoots|. If the |mark| (|margins|, |foots|) option
-% is given, then erratum markup (margin decorations, explanatory footnotes) are generated.
-% The |show| option (the default) is equivalent to |mark,margins,foots|, the |hide| option
-% to |nomark,nomargins,nofoots|.
+% is given, then erratum markup (margin decorations, explanatory footnotes) are
+% generated. Note that |margins| and |foots| both (implicitly) entail |mark|.  The |show|
+% option (the default) is equivalent to |mark,margins,foots|, the |hide| option to
+% |nomark,nomargins,nofoots|.
 % 
 % If the \DescribeMacro{record}|record| option is specified, then errata are written to a
 % special file \meta{jobname}|-errata.tex| so that they can be included in an errata
@@ -270,10 +271,10 @@
 %    \end{macrocode}
 % the next step is to declare the package options, they just set the switches accordingly.
 %    \begin{macrocode}
-\DeclareOption{show}{\marginstrue\footstrue}
-\DeclareOption{hide}{\marginsfalse\footsfalse}
-\DeclareOption{margins}{\marginstrue}
-\DeclareOption{foots}{\footstrue}
+\DeclareOption{show}{\marginstrue\footstrue\marktrue}
+\DeclareOption{hide}{\marginsfalse\footsfalse\markfalse}
+\DeclareOption{margins}{\marginstrue\marktrue}
+\DeclareOption{foots}{\footstrue\marktrue}
 \DeclareOption{nomargins}{\marginsfalse}
 \DeclareOption{nofoots}{\footsfalse}
 \DeclareOption{mark}{\marktrue}

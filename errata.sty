@@ -7,15 +7,15 @@
 %% errata.dtx  (with options: `package')
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{errata}[2015/04/13 v0.4 Errata Management]
+\ProvidesPackage{errata}[2015/04/14 v0.4 Errata Management]
 \newif\ifmargins\marginstrue
 \newif\iffoots\footstrue
 \newif\ifmark\marktrue
 \newif\ifrecord\recordfalse
-\DeclareOption{show}{\marginstrue\footstrue}
-\DeclareOption{hide}{\marginsfalse\footsfalse}
-\DeclareOption{margins}{\marginstrue}
-\DeclareOption{foots}{\footstrue}
+\DeclareOption{show}{\marginstrue\footstrue\marktrue}
+\DeclareOption{hide}{\marginsfalse\footsfalse\markfalse}
+\DeclareOption{margins}{\marginstrue\marktrue}
+\DeclareOption{foots}{\footstrue\marktrue}
 \DeclareOption{nomargins}{\marginsfalse}
 \DeclareOption{nofoots}{\footsfalse}
 \DeclareOption{mark}{\marktrue}
