@@ -12,7 +12,7 @@
 % 
 % \iffalse
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
-%<package>\ProvidesPackage{errata}[2015/04/13 v0.4 Errata Management]
+%<package>\ProvidesPackage{errata}[2015/04/14 v0.4 Errata Management]
 %
 %<*driver>
 \documentclass[twoside]{ltxdoc}
@@ -37,12 +37,13 @@
 %</driver>
 % \fi
 % 
-%\CheckSum{211}
+%\CheckSum{247}
 % 
 % \changes{v0.1}{2006/07/18}{First Version with Documentation}
 % \changes{v0.2}{2006/08/01}{More Documentation and Keywords Management}
 % \changes{v0.3}{2006/11/21}{adding type Keyword}
 % \changes{v0.4}{2015/04/13}{moved to GIT, fixing switches}
+% \changes{v0.4}{2015/04/14}{cleanup, introducing \texttt{mark} and \texttt{no*} options}
 % 
 % \GetFileInfo{errata.sty}
 % 
@@ -83,10 +84,12 @@
 % \DescribeMacro{show}|show| and \DescribeMacro{hide}|hide| options govern the general
 % visibility of the errata markup. If |hide| is specified (the default, if no option is
 % given), then errata markup is totally invisible in the formatted document.  The
-% \DescribeMacro{margins}|margins| and \DescribeMacro{foots}|foots| options give finer
-% control. If the |margins| (|foots|) option is not given, then margin decorations
-% (explanatory footnotes) are not generated.  The |show| option is equivalent to |margins|
-% and |foots|, the |hide| option overrides both.
+% \DescribeMacro{mark}|mark|, \DescribeMacro{margins}|margins|, and
+% \DescribeMacro{foots}|foots| options give finer control together with their negative
+% variants |nomark|, |nomargins|, and |nofoots|. If the |mark| (|margins|, |foots|) option
+% is given, then erratum markup (margin decorations, explanatory footnotes) are generated.
+% The |show| option (the default) is equivalent to |mark,margins,foots|, the |hide| option
+% to |nomark,nomargins,nofoots|.
 % 
 % If the \DescribeMacro{record}|record| option is specified, then errata are written to a
 % special file \meta{jobname}|-errata.tex| so that they can be included in an errata
@@ -233,7 +236,23 @@
 % needs to close the errata file |thebook-errata.tex| therefore we need a |\newpage| to
 % clear the queue of waiting |\writes| before |thebook-errata.tex| can be loaded
 % (otherwise we may be missing the errata from the last page).
-%
+% 
+% \section{Limitations}\label{sec:limits}
+% 
+% The support offered by this package is still relatively basic. There are many possible
+% extensions I would like, but do not have the time for right now. It would be nice to
+% have 
+% 
+% \begin{enumerate}
+% \item the erratum marks configurable by a user-defined macro (e.g. for using colors
+%   instead of square brackets)
+% \item erratum markup show the old version next to the new ones in place (MS Word
+%   and google docs do a nice job of this in change mode)
+% \item hyperlinking errata marks to the printed errata
+% \end{enumerate}
+% If you want to contribute, please contact the author or make a pull request at
+% \url{https://github.com/KWARC/LaTeX-errata}
+% 
 % \StopEventually{\newpage\PrintChanges\newpage\section{The Errata of this Document}\printerrata{errata}}
 %
 % \newpage
@@ -244,9 +263,9 @@
 % of the errata markup and the annotations in the margins and the footnotes.
 %    \begin{macrocode}
 %<*package>
-\newif\ifmargins\marginsfalse
-\newif\iffoots\footsfalse
-\newif\ifmark\markfalse
+\newif\ifmargins\marginstrue
+\newif\iffoots\footstrue
+\newif\ifmark\marktrue
 \newif\ifrecord\recordfalse
 %    \end{macrocode}
 % the next step is to declare the package options, they just set the switches accordingly.
@@ -255,7 +274,10 @@
 \DeclareOption{hide}{\marginsfalse\footsfalse}
 \DeclareOption{margins}{\marginstrue}
 \DeclareOption{foots}{\footstrue}
+\DeclareOption{nomargins}{\marginsfalse}
+\DeclareOption{nofoots}{\footsfalse}
 \DeclareOption{mark}{\marktrue}
+\DeclareOption{nomark}{\markfalse}
 \DeclareOption{record}{\recordtrue}
 \ProcessOptions
 %    \end{macrocode}
@@ -386,21 +408,22 @@
 % This macro just passes through the argument, and delimits it, so that the extent
 % of the insertion can be seen. 
 %    \begin{macrocode}
-\def\eAdd##1{[##1]$_a$}%
+\def\eAdd##1{\ifmark[\fi ##1\ifmark]$_a$\fi}%
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\eDelete}
 % This macro just passes through the argument, and explains what was deleted in a
 % footnote. 
 %    \begin{macrocode}
-\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\iffoots\@footnotetext{deleted: ##1}\fi}%
+\def\eDelete##1{\erratum@mark\ifmark[]$_d^{\@thefnmark}$\else\ignorespaces\fi%
+\iffoots\@footnotetext{deleted: ##1}\fi}%
 %    \end{macrocode}
 % \begin{macro}{\eReplace} 
 % This macro just passes through the second argument, delimits it and marks the
 % replacement in a footnote. 
 %    \begin{macrocode}
-\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\iffoots\@footnotetext{was:
-    ##1}\fi}%
+\def\eReplace##1##2{\erratum@mark\ifmark[\fi ##2\ifmark]$_r^{\@thefnmark}$\fi%
+\iffoots\@footnotetext{was: ##1}\fi}%
 \ignorespaces}
 %    \end{macrocode}
 % \end{macro}
@@ -440,10 +463,11 @@
 % LocalWords:  alltogether erratamessage erratamessage thebook.tex theerrata.tex thebook
 % LocalWords:  newpage ifmargins iffoots newif marginsfalse footsfalse ifrecord newwrite
 % LocalWords:  recordfalse marginstrue footstrue recordtrue newcounter openout ifnum
-% LocalWords:  subsubsection newenvironment newcommand keyvals setkeys stepcounter
-% LocalWords:  marginpar typeout scshape theerratum ednotemessage
+% LocalWords:  subsubsection newenvironment newcommand keyvals setkeys stepcounter texttt
+% LocalWords:  marginpar typeout scshape theerratum ednotemessage texttt nomark nomargins
 %
 % Local Variables:
 % mode: doctex
 % TeX-master: t
 % End:
+%  LocalWords:  Schroll-Fleischer nofoots colors ifmark ignorespaces doctex
