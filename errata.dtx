@@ -21,7 +21,7 @@
 \DoNotIndex{\immediate,\openout,\closeout,\message,\typeout}
 \EnableCrossrefs
 %\CodelineIndex
-%\OnlyDescr3iption
+%\OnlyDescription
 \RecordChanges
 \usepackage{textcomp,url,float,a4wide}
 \usepackage[show]{ed}
@@ -37,7 +37,7 @@
 %</driver>
 % \fi
 % 
-%\CheckSum{201}
+%\CheckSum{211}
 % 
 % \changes{v0.1}{2006/07/18}{First Version with Documentation}
 % \changes{v0.2}{2006/08/01}{More Documentation and Keywords Management}
@@ -73,6 +73,9 @@
 %
 % The development version of this package can be found on GitHub at
 % \url{https://github.com/KWARC/LaTeX-errata}
+% 
+% \paragraph{Acknowledgements} Thanks to Johan Schroll-Fleischer for comments and bug
+% reports.
 % 
 % \section{The User Interface}\label{sec:user-interface}
 %
@@ -336,8 +339,8 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#3]$_a^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}\fi}
 %    \end{macrocode}
 % \end{macro}
 % 
@@ -347,8 +350,8 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 []$_d^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}\fi}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -358,8 +361,8 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#4]$_r^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}\fi}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -388,13 +391,13 @@
 % This macro just passes through the argument, and explains what was deleted in a
 % footnote. 
 %    \begin{macrocode}
-\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\@footnotetext{deleted: ##1}}%
+\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\iffoots\@footnotetext{deleted: ##1}\fi}%
 %    \end{macrocode}
 % \begin{macro}{\eReplace} 
 % This macro just passes through the second argument, delimits it and marks the
 % replacement in a footnote. 
 %    \begin{macrocode}
-\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\@footnotetext{was: ##1}}}%
+\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\iffoots\@footnotetext{was: ##1}\fi}}%
 %    \end{macrocode}
 % \end{macro}
 % The end part of the |erratum| environment is almost trivial, it only marks the margin

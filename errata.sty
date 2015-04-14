@@ -41,20 +41,20 @@
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#3]$_a^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}\fi}
 \newcommand{\erratumDelete}[3][]% keyvals, explanation, old
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 []$_d^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}\fi}
 \newcommand{\erratumReplace}[4][]% keyvals, explanation, old, new
 {\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
 \ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
 [#4]$_r^{\arabic{erratum}}$%
-\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}}
+\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
+\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}\fi}
 \newenvironment{erratum}[2][]% keys, explanation
 {\setkeys{erratum}{#1}\stepcounter{erratum}
 \edef\new@number{\theerratum}\message{Erratum \new@number!}
@@ -63,8 +63,8 @@
 \ifmargins\marginpar{BErr(\new@number)}\fi\fi
 \record@erratum{#2}
 \def\eAdd##1{[##1]$_a$}%
-\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\@footnotetext{deleted: ##1}}%
-\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\@footnotetext{was: ##1}}}%
+\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\iffoots\@footnotetext{deleted: ##1}\fi}%
+\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\iffoots\@footnotetext{was: ##1}\fi}}%
 {\ifmargins\marginpar{EErr(\new@number)}\fi}
 \def\erratum@mark{\stepcounter{erratum@note}{}
 \def\@thefnmark{\arabic{erratum}:\arabic{erratum@note}}}
