@@ -1,6 +1,7 @@
 % \iffalse meta-comment
 % A Package for recording errata
 % Copyright (c) 2006 Michael Kohlhase, all rights reserved
+% Copyright (c) 2015 Bendik Rønning Opstad
 %
 % This file is distributed under the terms of the LaTeX Project Public
 % License from CTAN archives in directory  macros/latex/base/lppl.txt.
@@ -8,172 +9,613 @@
 %
 % The development version of this file can be found at
 % https://github.com/KWARC/LaTeX-errata
-% \fi
-% 
-% \iffalse
-%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
-%<package>\ProvidesPackage{errata}[2015/04/14 v0.4 Errata Management]
 %
+% \paragraph{Acknowledgements} Thanks to Johan Schroll-Fleischer for comments and bug
+% reports.
+%
+% \fi
+%
+% \iffalse
 %<*driver>
 \documentclass[twoside]{ltxdoc}
+\makeatletter
+\def\SpecialMainIndex#1{%
+\@bsphack
+\immediate\write\@auxout{%
+\global\noexpand\expandafter\let\noexpand\csname MAIN:\noexpand\string\string#1\endcsname\noexpand\@empty}%
+\SpecialIndex@{#1}{\encapchar main}\@esphack}
+\def\SpecialIndex#1{%
+\@bsphack
+   \expandafter\ifx\csname MAIN:\string#1\endcsname\@empty
+   \special@index{\expandafter\@gobble
+                                      \string#1\actualchar
+      \string\verb\quotechar*\verbatimchar\string#1\verbatimchar}%
+   \fi
+    \@esphack}
+\makeatother
 \DoNotIndex{\def,\long,\edef,\xdef,\gdef,\let,\global}
 \DoNotIndex{\begin,\AtEndDocument,\newcommand,\newcounter,\stepcounter}
 \DoNotIndex{\immediate,\openout,\closeout,\message,\typeout}
-\EnableCrossrefs
-%\CodelineIndex
-%\OnlyDescription
-\RecordChanges
-\usepackage{textcomp,url,float,a4wide}
+\DoNotIndex{\pageref,\parindent}
+\DoNotIndex{\section,\scshape,\arabic,\\}
+\usepackage{textcomp,url,a4}
+\usepackage{hypdoc}
+\hypersetup{%
+  linkcolor=black,
+ }
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.4in,verbose=false]{geometry}
+\input{preamble}
+\input{erratadocutil}
 \usepackage[show]{ed}
 \usepackage[show]{errata}
-\usepackage{fancyhdr}
+%\usepackage[colorlinks=true,linkcolor=black,linktocpage=true]{hyperref}
+\usepackage[fancyhdr,today,draft]{svninfo}
 \pagestyle{fancyplain}\fancyhead[RE,LO]{\leftmark}\fancyhead[LE,RO]{\thepage}
+\index{explicit indexing|usage}
+\EnableCrossrefs
+\PageIndex
+\RecordChanges
 \floatstyle{boxed}
-\newfloat{exfig}{thp}{lop}
-\floatname{exfig}{Example}
+\usepackage{filecontents}
+\usepackage{dox}
+\doxitem{PkgOption}{pkgoption}{package options}
+\doxitem[idxtype=opt.]{CmdOption}{cmdoption}{command options}
 \begin{document}
+\svnInfo $Id$
+\svnKeyword $HeadURL$
 \DocInput{errata.dtx}
 \end{document}
+%%% CheckSum{508}
 %</driver>
+%<*linecounter.sty>
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{linecounter}[]
+\newread\File
+\makeatletter
+\newcommand{\CountLinesInFile}[2]{% Filename, counter name
+  \@ifundefined{c@#2}%
+  {\newcounter{#2}}{}
+  \setcounter{#2}{-1}
+  \openin\File=#1
+  \@whilesw\unless\ifeof\File\fi{%
+    \stepcounter{#2}
+    \readline\File to \line
+  }
+  \closein\File
+}
+\makeatother
+%</linecounter.sty>
+%<*erratapgfkeysextra.tex>
+%% Fix setting global values with pgfkeys
+\long\def\pgfkeysgdef#1#2{%
+  \long\def\pgfkeys@temp##1\pgfeov{#2}%
+  \global\pgfkeyslet{#1/.@cmd}{\pgfkeys@temp}%
+  \pgfkeyssetvalue{#1/.@body}{#2}%
+}
+\long\def\pgfkeysgaddvalue#1#2#3{%
+  {%
+    \toks0{#2}%
+    \pgfkeysifdefined{#1}
+    {\pgfkeys@temptoks\expandafter\expandafter\expandafter{\csname pgfk@#1\endcsname}}%
+    {\pgfkeys@temptoks{}}%
+    \toks1{#3}%
+    \xdef\pgfkeys@global@temp{\the\toks0 \the\pgfkeys@temptoks \the\toks1}% believe or don't: the spaces are important
+  }%
+  \global\pgfkeyslet{#1}\pgfkeys@global@temp%
+}
+\pgfkeysdef{/handlers/.gcode}{\pgfkeysgdef{\pgfkeyscurrentpath}{#1}}
+\pgfkeys{/handlers/.gappend/.code={\pgfkeysgaddvalue{\pgfkeyscurrentpath}{}{#1}}}
+\pgfkeys{/handlers/.gstore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\gdef#1{##1}}}}
+\pgfkeys{/handlers/.gestore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\global\edef#1{##1}}}}
+%</erratapgfkeysextra.tex>
+%<*strkeyformatter.sty>
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{strkeyformatter}[2015/04/06 v1.0 Format a string based on key/value input]
+\RequirePackage{xparse}
+\RequirePackage{xstring}
+\RequirePackage{stringstrings}
+\RequirePackage{linecounter}
+\RequirePackage{kvoptions}[2009/07/21]
+\SetupKeyvalOptions {
+  family = StrFmt,
+  prefix = @StrFmtOpt@,
+}
+\DeclareStringOption[-]{notemptyprefix}
+\DeclareStringOption[+]{evenemptyprefix}
+\DeclareStringOption[@StrFmt@]{family}
+\ProcessKeyvalOptions{StrFmt}
+%%
+\pgfkeysdefnargs{/handlers/.setStrKeyFmt}{2}{%
+  \pgfkeysdefargs{\pgfkeyscurrentpath/.@formatter}{#1}{%
+    \pgfkeyssetvalue{\pgfkeysdefaultpath.@formatted/.@def}{#2}}}
+%%
+\pgfkeysdefnargs{/handlers/.@StrFmt@setdefaultformat}{4}{%
+  \xintFor ##9 in {#4} \do {%
+    \pgfkeys{{#1/##9/.setStrKeyFmt={#2}{{#3}}}}% The default formater
+  }}
+\pgfkeys{/handlers/.also/.code={\pgfkeysalso{#1}}}
+\pgfkeys{/handlers/.ealso/.code={\pgfqkeysalso{\pgfkeyscurrentpath}{.also/.expand once={#1}}}}
+%%
+\def\@StrFmt@set{\pgfqkeys{/\@StrFmtOpt@family}}
+\DeclareExpandableDocumentCommand{\@StrFmt@setvalues}{ O{} m } {\@StrFmt@set{#1/.cd, #2}}
+\DeclareExpandableDocumentCommand{\@StrFmt@getvalue}{ m } {\pgfkeysvalueof{\@StrFmtOpt@family/#1}}
+\NewDocumentCommand{\SetDefaultKeylistFormat}{ O{#1} m m }{% format, group, keys
+  \@StrFmt@set{#2/.@StrFmt@setdefaultformat={\@StrFmtOpt@family/#2}{#1}{#1}{#3}}%
+}
+\NewDocumentCommand{\StrFmtgetformattedee}{ m m m }{% key, args, macroname
+  \@StrFmt@setvalues[#1]{.@formatter/.expand twice={#2}}%
+  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
+}
+\NewDocumentCommand{\StrFmtgetformattede}{ m m m }{% key, args, macroname
+  \@StrFmt@setvalues[#1]{.@formatter/.expand once={#2}}%
+  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
+}
+\NewDocumentCommand{\StrFmtgetformatted}{ m m m }{% key, args, macroname
+  \@StrFmt@setvalues[#1]{.@formatter={#2}}%
+  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
+}
+\NewDocumentCommand{\StrFmtSetKeyFormat}{ O{} m m }{% PGF argument pattern, key, formated output
+  \@StrFmt@set{#2/.setStrKeyFmt={#1}{#3}}% Set custom format
+}
+\NewDocumentCommand{\@StrFmt@isnotempty}{ m m }{\ifthenelse{\equal{#1}{}}{}{#2}}
+\NewDocumentCommand{\@StrFmt@isempty}{ m m }{\ifthenelse{\equal{#1}{}}{#2}{}}
+%%
+\newcommand\@StrFmt@ifiskey[1]{\ifboolexpr{ test{\IfBeginWith{#1}{\@StrFmtOpt@evenemptyprefix}} or test{\IfBeginWith{#1}{\@StrFmtOpt@notemptyprefix}}}}
+%%
+\@StrFmt@set{formateroutputt/.initial={}}
+%% Arguments:
+%% [1]: [optional]macro name to store results
+%% [2]: The command parent key for the keys
+%% [3]: format group key
+%% [4]: Keywords (as comma separated values)
+%% [5]: Text containing the keys that define this formatted text to produce
+\NewDocumentCommand{\@StrFmt@FormatKeywords}{ O{} m m m m }{% format group key, parent key, formatkey parent , keys/values, format-string
+\@StrFmt@set{cmdkeys/.ealso=#4}%
+\@StrFmt@set{formateroutputt={}}%
+%% Reset arg key values
+\xintFor ##1 in {#5} \do {%
+  \ifboolexpr{ test {\@StrFmt@ifiskey{##1}} }%
+  {\StrGobbleLeft{##1}{1}[\@StrFmt@tmp@right]%
+    \pgfkeysifdefined{/\@StrFmtOpt@family/#3/\@StrFmt@tmp@right}{\@StrFmt@set{#3/\@StrFmt@tmp@right={}}}{}%
+  }{}% End IfBeginWith
+}%
+%%
+\@StrFmt@isnotempty{#4}{%
+  %% If key/val options, set the values
+  \xintFor ##1 in {#4} \do {%
+    \@StrFmt@isnotempty{##1}{\@StrFmt@set{#3/##1}}%
+  }}%
+%% Process format keys
+\xintFor ##9 in {#5} \do {%
+  \@StrFmt@isnotempty{##9}{% Just for safety
+    \ifboolexpr{ test {\@StrFmt@ifiskey{##9}} } {% Test if it's a key
+      \StrGobbleLeft{##9}{1}[\@StrFmt@tmp@right]%
+      \pgfkeysgetvalue{/\@StrFmtOpt@family/#3/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}%
+      %% Fetch the value for the key
+      %% If the key is prefixed with \@StrFmtOpt@notemptyprefix, and the value is empty, it's ignored
+      \ifboolexpr{ not test{\IfBeginWith{#1}{\@StrFmtOpt@notemptyprefix}}
+        and not test{\ifthenelse{\equal{\@StrFmt@tmpvalue}{}}}}{%
+        \StrFmtgetformattede{#2/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}{\@StrFmt@tmp@fmtvalue}%
+        \@StrFmt@set{formateroutputt/.append/.expand once={\@StrFmt@tmp@fmtvalue}}%
+      }{}%
+    }{% Not a key
+      \@StrFmt@set{formateroutputt/.append={##9}}%
+}}}%
+\@StrFmt@set{formateroutputt/.get=\@StrFmt@formateroutputt}%
+\ifthenelse{\equal{#1}{}}{%
+%% Output the result here in the document
+\@StrFmt@formateroutputt%
+}{%
+%% Store the in macro from ARG1
+\protected@csxdef{#1}{\expandonce{\@StrFmt@formateroutputt}}%
+}}%
+%</strkeyformatter.sty>
+%<*erratadocutil.tex>
+\usepackage[fleqn,tbtags]{mathtools}
+\usepackage{xparse}
+\usepackage{caption}
+\usepackage{float}
+\PassOptionsToPackage{outputdir=build}{minted}
+\newfloat{exfig}{thp}{lop}
+\floatname{exfig}{Example}
+%
+\tcbset{latexcode/.style={
+    listing only,
+    fontlower=\small,
+    skin=beamer,
+    lower separated=true,
+    enlarge top by=0.5cm,          % Add space above the box
+    arc=0cm,            % Remove the rounded corners
+    outer arc=0.3mm,    % Remove the rounded corners on outside
+    right=0mm,% Remove spacing on right s
+    top=5pt,
+    bottom=5pt,
+    boxrule=0mm,        % The border width
+    bottomrule=1pt,
+    leftrule=0.7pt,
+    rightrule=1pt,
+    lines before break=6, % Require at least 5 lines in the upper part to break the code block
+    toptitle=2pt,       % Add space in title bar
+    bottomtitle=1pt,    % Add space in title bar
+    title={Example},%
+    listing engine=minted,
+    minted language=latex,
+    before skip=\medskipamount,
+    after skip=\medskipamount,
+  },
+  erratadocexample/.style={
+    fontlower=\normalsize,
+    minted options={fontsize=\normalsize\ttfamily},
+  },
+  codeandresult/.style={
+    listing and text,
+    erratadocexample,
+    left=5pt,
+    listing engine=minted,
+  },
+}
+%
+\DeclareTCBInputListing[%
+auto counter,
+list inside=exfig,
+Crefname={Example}{Examples},
+crefname={example}{examples},
+]{\examplecodeinput}{ m m }{listing file={build/#1}, #2}
+%
+\DeclareTCBListing[%
+auto counter,
+list inside=exfig,
+Crefname={Example}{Examples},
+crefname={example}{examples},
+]{examplecode}{ m }{#1}
+\usepackage{etextools}% Adds the \expandnext macro
+\usepackage{listings}
+\makeatletter%
+\lst@RequireAspects{writefile}
+%
+%
+\lstnewenvironment{savecodeexample}[2][]{%
+  \lstset{#1}%
+  %\immediate\typeout{HELLO: savecodeexample}%
+  % The content is stored in a temp box to avoid any spaces etc.
+  % to have an impact
+  \setbox\@tempboxa\hbox\bgroup
+  % Write file to given filename
+  \lst@BeginWriteFile{build/#2}%
+}
+{%
+  \lst@EndWriteFile% closes output file
+  \egroup% End of temp box
+  % You can already read the file again here
+%%  \input{build/#2}%
+}
+%
+%% Simply do not include if the file does not exist. This is necessary
+%% as the code listings from the source code aren't yet genereted on the
+%% first run.
+\NewDocumentCommand{\inputfromcode}{ m }{%
+\IfFileExists{#1}{%
+\CountLinesInFile{#1}{FileLines}%
+\addtocounter{FileLines}{-1}%
+\protected@edef\LastLine{\theFileLines}%
+\expandnext{\custominputlisting{#1}{2}}{\LastLine}%
+}{}%
+}
+\NewDocumentCommand{\custominputlisting}{ m m m }{%
+  \tcbinputlisting{listing file={build/#1},
+    listing only,
+    minted options={
+      fontsize=\footnotesize\ttfamily,
+      firstline=#2,
+      lastline=#3,
+    },%
+  }
+}
+\makeatother%
+%%
+% Redefine thempfootnote to fix footnote numbering inside tcolorboxes
+\renewcommand{\thempfootnote}{\arabic{mpfootnote}}
+\NewDocumentCommand{\docaption}{ O{exfig} m }{{\captionsetup{type=#1,position=below,belowskip=12pt} \caption{#2}}}
+%</erratadocutil.tex>
+%<*preamble.tex>
+\usepackage{bookmark}
+\PassOptionsToPackage{log-declarations=false}{xparse}
+\usepackage{xparse}
+\usepackage{cleveref}
+\usepackage{tcolorbox}[2015/01/14] % Minimum v3.40
+\tcbuselibrary{most}
+\tcbuselibrary{documentation}
+\tcbuselibrary{breakable}
+\tcbuselibrary{skins}
+\usetikzlibrary{shadings}
+\tcbuselibrary{fitting}
+\tcbuselibrary{hooks}
+\tcbuselibrary{xparse}
+\tcbuselibrary{minted}
+\usetikzlibrary{shadings}
+\tcbset{index format=doc,
+  index colorize=true,
+index annotate=true,
+}
+%%
+\makeatletter%
+\tcbset{
+  color code/.store in=\kvtcb@col@code,
+  color code=Definition,
+  doc head code/.style={doc@head@code/.style={#1}},
+  %doc head/.style append={doc head code={#1}},
+  doc head/.style={doc head command={#1},doc head environment={#1},doc head key={#1},
+    doc head code={#1}},
+}
+\def\tcb@Print@Code#1{\textcolor{\kvtcb@col@code}{\bfseries{#1}}}
+
+\NewTColorBox[auto counter, crefname={definition}{definitions}]{docTargetBox}{ O{} m } {
+title={\thesection.\thetcbcounter~#2}, #1}
+
+\newenvironment{docCode}[3][]{\tcbset{#1}%
+  \begin{tcb@manual@entry}%
+  \begin{tcb@doc@head}{doc@head@command}
+  \tcb@Print@Code{#2}\label{code:#3}%
+  \tcb@doc@do@description%
+  \end{tcb@doc@head}\tcbset{before upper=}}%
+  {\end{tcb@manual@entry}}
+
+\newenvironment{docCode*}{\bgroup\tcb@doc@toindexfalse\begin{docCode}}{\end{docCode}\egroup}
+
+\DeclareDocumentCommand\tcb@ref@docc{msm}{%
+  \hyperref[#1:#3]{\texttt{#3}}%
+  \IfBooleanTF{#2}{}{%
+    \ifnum\getpagerefnumber{#1:#3}=\thepage%
+    \else%
+      \textsuperscript{\ding{213}\,\kvtcb@text@pageshort\,\pageref*{#1:#3}}%
+    \fi}}%
+
+\def\refCode{\tcb@ref@docc{code}}
+\makeatother%
+
+\DeclareDocumentEnvironment{docTarget}{ m } % Label name
+{\hypertarget{#1}{}
+\bookmark[dest={#1},level=2]{#1}
+\begin{docCode*}[color key=yellow!50!red,title=TEST]{#1}{#1}
+}
+{\end{docCode*}}
+%</preamble.tex>
 % \fi
-% 
-%\CheckSum{251}
-% 
+%
 % \changes{v0.1}{2006/07/18}{First Version with Documentation}
 % \changes{v0.2}{2006/08/01}{More Documentation and Keywords Management}
 % \changes{v0.3}{2006/11/21}{adding type Keyword}
 % \changes{v0.4}{2015/04/13}{moved to GIT, fixing switches}
-% \changes{v0.4}{2015/04/14}{cleanup, introducing \texttt{mark} and \texttt{no*} options}
-% 
+% \changes{v1.0}{2015/04/16}{Added support for links with hyperref, and customization through formatters}
+%
 % \GetFileInfo{errata.sty}
-% 
+%
 % \MakeShortVerb{\|}
 % \title{Recording Errata in {\LaTeX} Documents\thanks{Version {\fileversion} (last revised
-%        {\filedate})}} 
+%        {\filedate})}}
 %    \author{Michael Kohlhase\\
 %            Computer Science, Jacobs University,  Bremen, Germany\\
-%            \url{http://kwarc.info/kohlhase}}
+%            \url{http://kwarc.info/kohlhase}\\[6mm]Bendik Rønning Opstad\\(bro.devel@gmail.com)}
 % \maketitle
 %
 % \begin{abstract}
 %   This package provides a simple infrastructure for recording errata in {\LaTeX}
 %   documents. This allows to maintain an updated version of the document (with all errors
 %   corrected) and automatically generate an errata document highlighting the difference
-%   to the published version. 
+%   to the published version.
 % \end{abstract}
 %
 % \section{Introduction}\label{sec:intro}
 %
 % The life-cycle of a document does not end with its publication. After that, errors will
 % be discovered, and have to be managed. The best way to do this is by marking errata in
-% the text and generating the errata document from that. In printed books, errata
-% documents came in the form of an errata sheet, which listed errors and was inserted into
-% the book manually, with the expectation that they would be corrected in a later
-% printing. In electronic documents where there is no printing cycle, errata documents (or
-% sections) are only sensible if there is a ``release cycle'', e.g. for standards.  
+% the text and generating the errata document from that.
 %
-% The development version of this package can be found on GitHub at
-% \url{https://github.com/KWARC/LaTeX-errata}
-% 
-% \paragraph{Acknowledgements} Thanks to Johan Schroll-Fleischer for comments and bug
-% reports.
-% 
-% \section{The User Interface}\label{sec:user-interface}
+% \section{Package Options}\label{sec:pkgopt}
 %
-% The |errata| package can be called with a variety of package options.  The
-% \DescribeMacro{show}|show| and \DescribeMacro{hide}|hide| options govern the general
-% visibility of the errata markup. If |hide| is specified (the default, if no option is
-% given), then errata markup is totally invisible in the formatted document.  The
-% \DescribeMacro{mark}|mark|, \DescribeMacro{margins}|margins|, and
-% \DescribeMacro{foots}|foots| options give finer control together with their negative
-% variants |nomark|, |nomargins|, and |nofoots|. If the |mark| (|margins|, |foots|) option
-% is given, then erratum markup (margin decorations, explanatory footnotes) are
-% generated. Note that |margins| and |foots| both (implicitly) entail |mark|.  The |show|
-% option (the default) is equivalent to |mark,margins,foots|, the |hide| option to
-% |nomark,nomargins,nofoots|.
-% 
-% If the \DescribeMacro{record}|record| option is specified, then errata are written to a
-% special file \meta{jobname}|-errata.tex| so that they can be included in an errata
-% document (see Section~\ref{sec:generating}).
+% The |errata| package can be called with a variety of package options.
 %
-% There are two kinds of errata, short ones or extended ones. We will go into them in the
-% next two subsections. All the errata macros take optional KeyVal arguments that specify
-% the metadata for the errata. We can specify the date when the erratum was found, with
-% the \DescribeMacro{date=}|date| key and the person that reported the erratum with with
-% the \DescribeMacro{reported-by=}|reported-by| key. Consider for instance the metadata
-% for the erratum in Example~\ref{fig:extended-erratum}; The date format follows the ISO
-% 8601 norm: it is of the form \meta{YYYY}|-|\meta{MM}|-|\meta{DD}, where \meta{YYYY} is
-% the 4-digit year, \meta{MM} the 2-digit month, and {\meta{DD}} the two-digit day of the
-% month. The format of the |reported-by| field is a free-form text\footnote{Remember to
-% wrap the value in curly braces if the name contains a comma}. We can specify an
-% identifier for the erratum using the \DescribeMacro{id=}|id| key, so that we can refer
-% back to it later. Finally, we can use the \DescribeMacro{type=}|type| key to specify the
-% type (e.g. ``clarification'') of an erratum.
+% \begin{docKey}{show}{=\meta{true/false}}{boolean, initially \colOpt{false}}
+%   Governs the general visibility of the errata markup. This option enables the options
+%   \refKey{foots}, \refKey{margins}, \refKey{inlinechanges}, and \refKey{inlinemarks}.
+% \end{docKey}
 %
-% \subsection{Short Errata}
-% 
-% Short errata can be recorded by the marking up the editing operations needed for the
-% corrections. The following example in Example~\ref{fig:short-errata} shows all editing
-% operations, which we will detail now:
-% 
-% \begin{exfig}
-% \begin{verbatim}
-% Here we have \erratumAdd{forgotten word}{three} errata
-% in one \erratumDelete{superfluous phrase}{darned} long
-% \erratumReplace{translated}{Zeile}{line}
-% \end{verbatim}
-% \caption{Some short errata}\label{fig:short-errata}
-% \end{exfig}
-% 
-% \DescribeMacro{\erratumAdd}|\erratumAdd| marks up a correction by adding some text. The
-% first argument holds the explanation of the intended correction and the second one the
-% new text.
-% 
-% \DescribeMacro{\erratumDelete}|\erratumDelete| does the same for a correction by
-% deleting some text; here the second argument holds the deleted text. While the
-% |\erratumAdd| will copy the contents of the second argument to the result document,
-% |\erratumDelete| does not. 
-% 
-% \DescribeMacro{\erratumReplace}|\erratumReplace{[|\meta{keys}|]|\meta{desc}|}{|\meta{old}|}{|\meta{new}|}|
-% replaces {\meta{old}} with {\meta{new}} in the result document.
-% 
+% \begin{docKey}{hide}{=\meta{true/false}}{complementary option to \refKey{show}}
+%   Will do the opposite of \refKey{show}, ensuring that the errata markup is totally
+%   invisible in the formatted document.
+% \end{docKey}
+%
+% \begin{docKey}{margins}{=\meta{true/false}}{boolean, initially \colOpt{false}}
+%   Enables decorations in the margin for each erratum. Setting
+%   \colDef{margins}=\colOpt{false} will globally disable all margin notes.
+% \end{docKey}
+%
+% \begin{docKey}{foots}{=\meta{true/false}}{boolean, initially \colOpt{false}}
+%   Enables footnote decorations for each erratum.
+% \end{docKey}
+%
+% \begin{docKey}{inlinemarks}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   By default, each errata change is marked in the document with the correction
+%   encapsulated by paranthesis as shown in \cref{code:short-errata}. By setting
+%   \colDef{inlinemarks}=\colOpt{false}, the inline marks will not be added.
+% \end{docKey}
+%
+% \begin{docKey}{inlinechanges}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   The default behavior is to make the errata changes visible in the document inlined in
+%   the text. By setting \colDef{inlinechanges}=\colOpt{false}, the document text will
+%   stay unchanged.
+% \end{docKey}
+%
+% \begin{docKey}{record}{=\meta{true/false}}{boolean, default \colOpt{true}}
+%   The errata entries will written to a file named \meta{jobname}|-errata.tex| so that
+%   they can be included in an errata document (see \cref{sec:generating}).
+% \end{docKey}
+%
+% \begin{docKey}{hyperref}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   This option is used to control whether the \refAux{hyperref} package will be used to
+%   create hyperlinks between each erratum, the margin notes and the errata list.
+% \end{docKey}
+%
+% \begin{docKey}{cleveref}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   This package option will require the \refAux{cleveref} package, and changes how labels
+%   are created so that the registered errata corrections can be referenced with
+%   \refAux{cleveref} commands\footnote{See \refCode{Cleveref support} for the code
+%   definition.}.
+% \end{docKey}
+%
+% \begin{docKey}{marginnote}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   The default behavior is to use the \refAuxcs{marginpar} macro to create the errata
+%   reference in the margins. In some environments, such as floating environments, the
+%   \refAuxcs{marginpar} macro cannot not be used. By default, \refAuxcs{marginnote} from
+%   the \refAux{marginnote} package will be used to handle margin notes when necessary.
+% \end{docKey}
+%
+% \begin{docKey}{styles}{=\meta{style name}}{string, initially default}
+%   The default styling of the errata markup in the errata list and the footnotes is very
+%   simple. This package option can be used to specify one or more predefined styles.
+%   Available styles are:
+%   \colOpt{default}, \colOpt{detailed}, \colOpt{tablelist}.
+% \end{docKey}
+%
+%
+% \begin{docKey}{requirecmddescription}{=\meta{true/false}}{boolean, initially \colOpt{true}}
+%   By setting this package option to \colOpt{false}, the errata command macros
+%   (\refCom{erratumAdd}, \refCom{erratumDelete}, \refCom{erratumReplace} and
+%   \refCom{erratumNote}) are defined without the mandatory description argument, i.e.
+%   \refCom*{erratumAdd}\oarg{keys}\marg{add}
+% \end{docKey}
+%
+% \newpage
+% \subsection{Default command arguments}\label{sect:defargs}
+%
+% The following package options can be used to specify a set of default settings to be
+% passed to the errata commands described in \cref{sec:metadata}. The different settings
+% are described in \cref{sec:cmdopt}.
+%
+% The default arguments may be changed using the following package options:
+%
+% \begin{docKey}{defaultargs}{=\brackets{\meta{command options}}}{key/values, default
+%   described below}
+%   This option allows setting a set of the default arguments to be passed to the errata
+%   commands \refCom{erratumAdd}, \refCom{erratumReplace}, \refCom{erratumDelete}, and
+%   \refCom{erratumNote}.\\
+%
+%
+%   The default values passed to all the commands are as follows\footnote{The code
+%   defining the default settings are defined in \refCode{Default command arguments}.}:
+%
+%   \colDef{margin}=\colOpt{true}\\
+%   \colDef{foot}=\colOpt{true}\\
+%   \colDef{inlinemark}=\colOpt{true}\\
+%   \colDef{inlinechange}=\colOpt{true}\\
+%   \colDef{record}=\colOpt{true}\\
+%   \colDef{marginargs}=\colOpt{\brackets{}}\\
+% \end{docKey}
+%
+% \begin{docKey}{defaultargsadd}{=\brackets{\meta{command options}}}{key/values, initially empty}
+% This option allows setting a set of the default arguments to be passed to the
+% \refCom{erratumAdd} command. Any arguments set will override the respective
+% argument set with \refKey{defaultargs}.
+% \end{docKey}
+%
+% \begin{docKey}{defaultargsdelete}{=\brackets{\meta{command options}}}{key/values, initially empty}
+% This option allows setting a set of the default arguments to be passed to the
+% \refCom{erratumDelete} command. Any arguments set will override the respective
+% argument set with \refKey{defaultargs}.
+% \end{docKey}
+%
+% \begin{docKey}{defaultargsreplace}{=\brackets{\meta{command options}}}{key/values, initially empty}
+% This option allows setting a set of the default arguments to be passed to the
+% \refCom{erratumReplace} command. Any arguments set will override the respective
+% argument set with \refKey{defaultargs}.
+% \end{docKey}
+%
+% \begin{docKey}{defaultargsnote}{=\brackets{\meta{command options}}}{key/values, initially empty}
+% This option allows setting a set of the default arguments to be passed to the
+% \refCom{erratumNote} command. Any arguments set will override the respective
+% argument set with \refKey{defaultargs}.
+% \end{docKey}
+%
+%
+% \section{Errata commands}
+%
+% Marking errata changes in the {\LaTeX} text is done using a few simple macros.
+%
+% \begin{docCommand}{erratumAdd}{\oarg{keys}\marg{desc}\marg{add}}
+% marks up a correction by adding the text \meta{add} for addition with
+% \meta{desc} describing the intended correction.
+% \end{docCommand}
+%
+% \begin{docCommand}{erratumDelete}{\oarg{keys}\marg{desc}\marg{delete}}
+% marks up a correction by deleting the text \meta{delete} with \meta{desc}
+% describing the intended correction.
+% \end{docCommand}
+%
+% \begin{docCommand}{erratumReplace}{\oarg{keys}\marg{desc}\marg{old}\marg{new}}
+% marks up a correction by replacing the text \meta{old} with \meta{new}.
+% \end{docCommand}
+%
+% \begin{docCommand}{erratumNote}{\oarg{keys}\marg{desc}\marg{note}}
+% creates a note entry that cannot be described by the other commands.
+% \end{docCommand}
+%
+% \subsection{Errata example}
+%
+% \Cref{code:short-errata} shows all editing operations in action.
+%
+% \begin{savecodeexample}[gobble=2]{example2.tex}
+%  Here we have \erratumAdd{forgotten word}{three} errata in one \erratumDelete{
+%  superfluous phrase}{darned} long \erratumReplace{translated}{Zeile}{line}.
+% \end{savecodeexample}
+%
+% \examplecodeinput{example2.tex}{latexcode, label={code:short-errata}}
+% \docaption{Some short errata}
+%
+%
 % All of these macros mark the location of the errata in the margin and document the
-% changes in footnote-like structures. For instance, the text fragment above would be
-% rendered as
+% changes in footnote-like structures. The text in \cref{code:short-errata} is rendered as
+% follows:
 % \begin{quote}
-% Here we have \erratumAdd{forgotten word}{three} errata
-% in one \erratumDelete{superfluous phrase}{darned} long
-% \erratumReplace{translated}{Zeile}{line}
+%   Here we have \erratumAdd{forgotten word}{three} errata in one
+%   \erratumDelete{superfluous phrase}{darned} long
+%   \erratumReplace{translated}{Zeile}{line}
 % \end{quote}
 %
-% \subsection{Extended Errata}
+% If the package option \refKey{hyperref} is enabled, the margin note will link to the
+% entry in the errata list produced by calling \refCom{PrintErrata}.
 %
-% Extended errata group multiple editing operations into a coherent group via the
-% \DescribeEnv{erratum}|erratum| environment. The first argument of this environment is an
-% explanation as for the short errata above. The |erratum| environment provides local
-% versions of the editing markup macros, which behave like those, but lack the first
-% (explanation) argument, which is already given in the environment that contains them.
-% 
-% \begin{exfig}
-% \begin{verbatim}
-% \begin{erratum}[date=2006-07-19,reported-by=Michael Kohlhase]{old should be new}
-% this is a test of a long erratum 
-% \begin{enumerate}
-%   \item We can replace \eReplace{oldtext}{newtext} 
-%   \item and \eAdd{new text}
-%   \item and finally delete old text\eDelete{alltogether}
-%   \end{enumerate}
-% \end{erratum}
-% \end{verbatim}
-% \caption{An extended erratum with local correction markers}\label{fig:extended-erratum}
-% \end{exfig}
-% 
-% This text fragment would be rendered as
+% \subsection{Errata environment}
+%
+% \begin{docEnvironment}{erratum}{\oarg{keys}{\marg{desc}}}
+%   Extended errata group multiple editing operations into a coherent group via the
+%   \refEnv{erratum} environment. The first argument of this environment is an explanation
+%   as for the short errata above. The \refEnv{erratum} environment provides local
+%   versions of the editing markup macros, which behave like those, but lack the first
+%   (explanation) argument, which is already given in the environment that contains them.
+% \end{docEnvironment}
+%
+% \begin{savecodeexample}[gobble=4]{example-erratum-env.tex}
+%   \begin{erratum}[date=2006-07-19,reported-by=Michael Kohlhase]{old should be new}
+%   This is a test of a long erratum
+%   \begin{enumerate}
+%     \item We can replace \eReplace{oldtext}{newtext}
+%     \item and \eAdd{new text}
+%     \item and finally delete old text\eDelete{alltogether}
+%     \end{enumerate}
+%   \end{erratum}
+% \end{savecodeexample}
+%
+% \examplecodeinput{example-erratum-env.tex}{latexcode, label={code:extended-erratum}}
+% \docaption{An extended erratum with local correction markers}
+%
+% The text in \cref{code:extended-erratum} would be rendered as
 % \begin{quote}
 % \begin{erratum}[reported-by=Michael Kohlhase,date=2006-11-21]{old should be new}
-% this is a test of a long erratum 
+% this is a test of a long erratum
 % \begin{enumerate}
-%   \item We can replace \eReplace{oldtext}{newtext} 
+%   \item We can replace \eReplace{oldtext}{newtext}
 %   \item and \eAdd{new text}
 %   \item and finally delete old text\eDelete{alltogether}
 %   \end{enumerate}
@@ -183,292 +625,1326 @@
 % The |erratum| environment should also be used in situations where the error occurs in an
 % environment, where normal {\TeX/\LaTeX} processing is suspended, e.g. a |verbatim|
 % environment. In this case, we can use it to attach correction information via the
-% environment, but do not use the local change documentations.\ednote{what do we do in
-%   floats? document}
+% environment, but do not use the local change documentations.
 %
-% \subsection{Generating Statistics and Errata Documents}\label{sec:generating}
+% \section{Command Options}\label{sec:cmdopt}
 %
-% Putting the macro \DescribeMacro{\erratamessage}|\erratamessage| just before the
-% |\end||{document}| will generate a message with cardinality information for the errata
-% into the log file.
-% 
-% Errata can be marked up using the \DescribeMacro{\erratumItem}|\erratumItem| macro in
-% the the\DescribeEnv{errata}|errata| environment. The |\erratumItem| takes two arguments,
-% the first is a reference to where the erratum occurred, and the second one the
-% explanation.
+% Each of the errata commands take an optional list of comma separated key/values as argument.
+% This can be used to specify per-command options for each errata entry.
 %
-% The \DescribeMacro{\printerrata}|\printerrata| command allows to print the errata for
-% another document. This command is useful when generating errata documents for published
-% works. Say we have a book with a driver file |thebook.tex|, into which we have
-% incorporated errata markup using the infrastructure detailed above. Then we have a new
-% document called e.g. |theerrata.tex| which has the form given in
-% Figure~\ref{fig:sample-errata-document}. Note that we have used |\printerrata{thebook}|
-% to include the errata notices generated from |thebook.tex|. 
-% \begin{exfig}
-% \begin{verbatim}
-% \documentclass{article}
-% \usepackage[hide]{errata}
-% \title{Errata for The Book}
-% \begin{document}
-% \maketitle
-% \begin{abstract} This document tracks the errata in The Book. \end{abstract}
-% \section{Introduction} 
-%  ... The errata of The Book are tracked in this document, whose newest version can be
-%  found at \url{.../berrata.pdf}. A version of The Book that contains all errata
-% corrections (and markup of what changed) can be found at \url{.../book.pdf}.
+% \begin{docKey}{margin}{=\meta{true/false}}{boolean, defaults to \colOpt{true}}
+%   Allows to override the default \colDef{margin} value for this erratum.
+% \end{docKey}
 %
-% In the following we will tabulate the errata in document order. Their location will be
-% referenced by the section they appear in rather than the page number, since we do not
-% expect the former to change in the errata correction process.
+% \begin{docKey}{foot}{=\meta{true/false}}{boolean, defaults to \colOpt{true}}
+%   Allows to override the default \colDef{foot} value for this erratum.
+% \end{docKey}
 %
-% \section{The Errata in The Book}
-% \printerrata{thebook}
-% \end{document}
-% \end{verbatim}
-% \caption{A Sample Errata Document}\label{fig:sample-errata-document}
-% \end{exfig}
+% \begin{docKey}{inlinechange}{=\meta{true/false}}{boolean, defaults to \colOpt{true}}
+%   Allows to override the default \colDef{inlinechange} value for this erratum.
+% \end{docKey}
 %
-% In the errata document in Figure~\ref{fig:sample-errata-document} we postulate that we
+% \begin{docKey}{inlinemark}{=\meta{true/false}}{boolean, defaults to \colOpt{true}}
+%   Allows to override the default \colDef{inlinemark} value for this erratum.
+% \end{docKey}
+%
+% \begin{docKey}{label}{=\meta{name of label}}{initially empty}
+%   Allows specifying a custom label name to be registered for this errata entry.
+% \end{docKey}
+%
+% \begin{docKey}{uselabel}{=\meta{name of label}}{string, defaults to errata<X>}
+%   Allows specifying a label to use instead of the default label generated for each
+%   registered erratum entry (errata<X> where X is the erratum number). This is necessary
+%   in environments where only one label may exist, such as in the \refAux{equation}
+%   environment.
+% \end{docKey}
+%
+% \begin{docKey}{marginargs}{=\brackets{\meta{key/valoptions}}}{list, initially empty}
+%   Allows specifying custom arguments to be passed to the marginnote formatter.
+% \end{docKey}
+%
+% \begin{docKey}{usemarginnote}{[=\meta{length}]}{length, initially \colOpt{0pt}}
+%   Forces the use of \refAuxcs{marginnote} for the errata command. An optional value can
+%   be specified which denotes how much to verticaly shift the margin note.
+% \end{docKey}
+%
+%
+% \section{Errata metadata}\label{sec:metadata}
+%
+% \subsection{Data keys}\label{subsec:data-keys}
+%
+% For each errata command, a set of meta-data can be specified for an errata entry.
+% The following keys can be used to registered additional data:
+%
+% \begin{docKey}{date}{=\meta{date when registered}}{string, initially empty}
+%   Allows specifying the date when the erratum was registered.
+% \end{docKey}
+%
+% \begin{docKey}{reported-by}{=\meta{name of reporter}}{string, initially empty}
+%   Allows specifying the name of the reporter.
+% \end{docKey}
+%
+% \begin{docKey}{description}{=\meta{description}}{string, initially empty}
+%   Allows specifying the description of the change.
+%
+%   If the package option \refKey{requirecmddescription} is true (the default), This key
+%   defaults to the value specified in the \meta{desc} field.
+% \end{docKey}
+%
+% \begin{docKey}{location}{=\meta{location hint}}{string, initially empty}
+%   Used to specify the location in the text where the change is made.
+% \end{docKey}
+%
+% \begin{docKey}{type}{=\meta{type of correction}}{string, initially empty}
+%   Used to specify what type of change is registered, e.g. grammar, clarification,
+%   layout.
+% \end{docKey}
+%
+% Remember to encapsulate any of values in curly braces if it contains a comma.
+%
+%
+% \subsection{Formatter keys}\label{subsec:formatter-keys}
+%
+% For each of the metadata keys specified in \cref{subsec:data-keys}, a formatter
+% is defined for the errata list and the footnotes. The formatter defines a custom
+% formatting rule which will be applied to the input value before being used.
+%
+% Additionally, the following formatter keys exist which may \textbf{not} be passed as
+% argument to the errata commands:
+%
+% \begin{docKey}{pageref}{}{name of label, errata<X>}
+%   Formats a reference to the page number where the erratum is located.
+% \end{docKey}
+%
+% \begin{docKey}{actiondescription}{}{}
+%   the formatted description of the action
+% \end{docKey}
+%
+% \begin{docKey}{action}{}{}
+%   The action name
+% \end{docKey}
+%
+% \begin{docKey}{erratumlistitem}{}{}
+%   This key is used to insert an \refAuxcs{item[]} in the errata list.
+% \end{docKey}
+%
+% \begin{docKey}{erratumlistitemtitle}{}{}
+%   The title for the erratum in the errata list
+% \end{docKey}
+%
+% \begin{docKey}{erratumlisttarget}{}{}
+%   The name used when creating a \refAuxcs{label} target in the errata list.
+% \end{docKey}
+%
+% \begin{docKey}{marginfmt/marginnote}{}{}
+%   Formats the marginnote
+% \end{docKey}
+%
+%
+% \subsection{Setting the format for footnotes and errata list}\label{subsec:formatting-foot-and-llist}
+%
+% The formatting of the footnotes and errata list can be changed using the two macros
+% \refCom{errataSetListFormat} and \refCom{errataSetFootFormat}.
+%
+% The argument \meta{keys} should specify a comma separated list of keys as specified in
+% \cref{sec:metadata}\footnote{See \refCode{Errata default style definition} for
+% the code definition}.
+%
+% \begin{docCommand}{errataSetFootFormat}{\marg{keys}}
+%   Allows changing how the footnotes are formatted.
+%
+% ^^A Include code extracted from the source code
+% {\inputfromcode{default-footnote-format.tex}}
+%
+% \end{docCommand}
+%
+% \begin{docCommand}{errataSetListFormat}{\marg{keys}}
+%
+% The default format for the errata list is defined with:
+%
+% ^^A Include code extracted from the source code
+% {\inputfromcode{default-erratalist-format.tex}}
+%
+% \end{docCommand}
+%
+%
+% \subsection{Formatting the keys}\label{subsec:formatting-keys}
+%
+% The format of each of the keys can be set using the macro
+% \refCom{errataSetKeyFormat}.
+%
+% \begin{docCommand}{errataSetKeyFormat}{\marg{key}\marg{format}}
+%   should be used to set the formatter key for a meta data key.
+% \end{docCommand}
+%
+% \iffalse
+% Must use a group around input to avoid the font being changed..????
+% \fi
+% The default format for the keys are as as follows\footnote{This code is defined at \refCode{Default formatters}.}:
+% ^^A Include code extracted from the source code
+% {\inputfromcode{style-default-formats.tex}}
+%
+%
+% \section{Generating Statistics and Errata Documents}\label{sec:generating}
+%
+% \begin{docCommand}{PrintErrata}{}
+%   This command inserts the errata list at the current position.
+% \end{docCommand}
+%
+% \begin{docCommand}{printerrata}{\oarg{postfix(-errata.tex)}\marg{prefix}}
+%   This command allows to print the errata for another document. This command is useful
+%   when generating errata documents for published works. Say we have a book with a driver
+%   file |thebook.tex|, into which we have incorporated errata markup using the
+%   infrastructure detailed above. Then we have a new document called e.g. |theerrata.tex|
+%   which has the form given in \cref{code:sample-errata-document}. Note that we have used
+%   \refCom{printerrata}\brackets{thebook} to include the errata notices generated from
+%   |thebook.tex|.
+% \end{docCommand}
+%
+%
+% \begin{docEnvironment}{errata}{}
+%   The errata list produced when the \refKey{record} option is enabled is placed inside
+%   this environment.
+% \end{docEnvironment}
+%
+% \begin{docCommand}{erratumItem}{\oarg{macro}\marg{title}\marg{text}}
+%   Errata can be marked up using the \refCom{erratumItem} macro in the \refEnv{errata}
+%   environment. \refCom{erratumItem} takes one optional, and two required arguments.
+%
+%   The first argument (\oarg{macro}) can be used to specify a macro containing a value
+%   that will be expanded after the other values, i.e. at the end.
+%
+%   The second argument \marg{title} will be formatted using the listformats/
+%   \refKey{erratumlistitem} key formatter. For the default formatting of the errata list
+%   this is used to insert a |\item[|\meta{title}|]| before the remaining errata meta data
+%   specified in the third argument \marg{text}
+%
+%   \begin{tcolorbox}[marker]
+%     Normally it is not necessary to manually use this macro, as the \refKey{record}
+%     option will write an \refAux{erratumItem} the to the errata for each registered
+%     erratum.
+%   \end{tcolorbox}
+% \end{docCommand}
+%
+% \begin{docCommand}{erratamessage}{}
+%   Putting the macro \refCom{erratamessage} just before the |\end{document}| will
+% generate a message with cardinality information for the errata into the log file.
+% \end{docCommand}
+%
+% In the errata document in \cref{code:sample-errata-document} we postulate that we
 % keep an updated version of The Book online\footnote{And indeed it is good practice to do
-% so if the copyright agreement with the publisher allows this.} using the infrastructure
-% provide by the |errata| package. In the updated version of |thebook.tex|, it can be
-% useful to tabulate the errata as well, e.g. in a section in the appendix. This can be
-% done by the \DescribeMacro{\printerrata}|\PrintErrata| command. Note that this command
-% needs to close the errata file |thebook-errata.tex| therefore we need a |\newpage| to
-% clear the queue of waiting |\writes| before |thebook-errata.tex| can be loaded
-% (otherwise we may be missing the errata from the last page).
-% 
+%   so if the copyright agreement with the publisher allows this.} using the
+% infrastructure provide by the |errata| package. In the
+% updated version of |thebook.tex|, it can be useful to tabulate the errata as well,
+% e.g. in a section in the appendix. This can be done by the \refCom{PrintErrata} command. Note
+% that this command needs to close the errata file |thebook-errata.tex| therefore we need
+% a |\newpage| to clear the queue of waiting |\writes| before |thebook-errata.tex| can be
+% loaded (otherwise we may be missing the errata from the last page).
+%
+% \begin{savecodeexample}[gobble=4]{example1.tex}
+%   \documentclass{article}
+%   \usepackage[hide]{errata}
+%   \title{Errata for The Book}
+%   \begin{document}
+%   \maketitle
+%   \begin{abstract} This document tracks the errata in The Book. \end{abstract}
+%   \section{Introduction}
+%   The errata of The Book are tracked in this document, whose newest version
+%   can be found at \url{.../berrata.pdf}. A version of The Book that contains
+%   all errata corrections (and markup of what changed) can be found at
+%   \url{.../book.pdf}.
+%
+%   In the following we will tabulate the errata in document order. Their
+%   location will be referenced by the section they appear in rather than the
+%   page number, since we do not expect the former to change in the errata
+%   correction process.
+%
+%   \section{The Errata in The Book}
+%   \printerrata{thebook}
+%   \end{document}
+% \end{savecodeexample}
+%
+% \examplecodeinput{example1.tex}{latexcode, label={code:sample-errata-document}}
+% \docaption{A Sample Errata Document}
+%
+%
 % \section{Limitations}\label{sec:limits}
-% 
-% The support offered by this package is still relatively basic. There are many possible
-% extensions I would like, but do not have the time for right now. It would be nice to
-% have 
-% 
-% \begin{enumerate}
-% \item the erratum marks configurable by a user-defined macro (e.g. for using colors
-%   instead of square brackets)
-% \item erratum markup show the old version next to the new ones in place (MS Word
-%   and google docs do a nice job of this in change mode)
-% \item hyperlinking errata marks to the printed errata
-% \end{enumerate}
+%
 % If you want to contribute, please contact the author or make a pull request at
 % \url{https://github.com/KWARC/LaTeX-errata}
-% 
-% \StopEventually{\newpage\PrintChanges\newpage\section{The Errata of this Document}\printerrata{errata}}
+%
+% \subsection{Support for special environments}\label{subsec:special-environments}
+%
+% When registering an erratum in environments such as \refAux{equation}
+% (from \refAux{amsmath} package),
+% labels cannot be created freely, therefore the label already registered in the
+% environment must be passed to the errata command.
+%
+% \Cref{code:example-equation} shows example where the label is specified manually.
+%
+% \begin{savecodeexample}[gobble=4]{example-equation.tex}
+%   \begin{equation}\label{customlabel}
+%   \begin{split}
+%     a=a  \\
+%     b=b \erratumAdd[uselabel=customlabel]{label}{custom label example}
+%   \end{split}
+%   \end{equation}
+% \end{savecodeexample}
+%
+% \examplecodeinput{example-equation.tex}{codeandresult,
+% label={code:example-equation}, title=Title}
+% \docaption{Some short errata}
+%
+% \subsection{Floating environments}\label{sec:limits-floats}
+%
+% When registering errata corrections inside floating environments, some manual
+% adjustments may be required. \Cref{code:example-margin-adjustment} shows
+% how the margins can be adjusted manually.
+%
+%
+% \begin{savecodeexample}[gobble=4]{example-margin-adjustment.tex}
+%   In this sentence\erratumAdd[inlinemark=false,label={comma1}]{added comma}
+%   {,} we added a comma with inline mark
+%   disabled\erratumAdd[inlinemark=true,label={comma2}] {added another
+%   comma}{,} as well as a comma with inlinemarking.
+%
+%   Inside environments where \refAuxcs{marginnote} must be used, it may be
+%   necesssary to manually adjust the vertical placement of the margin note
+%   when multiple notes overlap.
+%
+%   As this code is processed inside a \refAux{tcolorbox}, \refAuxcs{marginnote}
+%   must be used instead of \refAuxcs{marginpar}. As we can see, \Cref{comma1}
+%   and \cref{comma2} are overlapping in the margin as
+%   \refAuxcs{marginnote} does not handle stacking multiple notes. Therefore,
+%   we must manually ask \refAuxcs{marginnote} to shift the second margin
+%   value, such as with \erratumAdd[inlinemark=true] {added missing
+%   word}{these} two \erratumAdd[inlinemark=true,usemarginnote=20pt] {added
+%   another missing word}{corrections}.
+% \end{savecodeexample}
+%
+% \examplecodeinput{example-margin-adjustment.tex}{codeandresult,
+% label={code:example-margin-adjustment}, title=Title}
+%   \docaption{Example showing how to adjust the margin notes}
+%
+%
+% \StopEventually{%
+% \newpage\PrintIndex
+% \newpage \PrintChanges
+% }
 %
 % \newpage
-% \section{The Implementation} 
+% \section{The Implementation}
 %
-% The implementation is rather standard. We first set up the options for the package. The
-% main switches are |\ifmargins|, |\iffoots|, and |\ifmark|, which govern the visibility
-% of the errata markup and the annotations in the margins and the footnotes.
+%\iffalse
 %    \begin{macrocode}
 %<*package>
-\newif\ifmargins\marginstrue
-\newif\iffoots\footstrue
-\newif\ifmark\marktrue
-\newif\ifrecord\recordfalse
 %    \end{macrocode}
-% the next step is to declare the package options, they just set the switches accordingly.
+%\fi
 %    \begin{macrocode}
-\DeclareOption{show}{\marginstrue\footstrue\marktrue}
-\DeclareOption{hide}{\marginsfalse\footsfalse\markfalse}
-\DeclareOption{margins}{\marginstrue\marktrue}
-\DeclareOption{foots}{\footstrue\marktrue}
-\DeclareOption{nomargins}{\marginsfalse}
-\DeclareOption{nofoots}{\footsfalse}
-\DeclareOption{mark}{\marktrue}
-\DeclareOption{nomark}{\markfalse}
-\DeclareOption{record}{\recordtrue}
-\ProcessOptions
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{errata}[2015/04/16 v1.0 Errata Management]
+\RequirePackage{xifthen}
+\RequirePackage{pgfkeys}
+\RequirePackage{etoolbox}
+\RequirePackage{xpatch}
+\RequirePackage{xparse}
+\RequirePackage{xinttools} % defines \xintFor macro
+\RequirePackage[family=@errata@]{strkeyformatter}
+\RequirePackage{kvoptions}[2009/07/21]
 %    \end{macrocode}
-% This ends the package setup code, so we can come to the implementation of the
-% functionality of the package. 
+% Setup package options
+%    \begin{macrocode}
+\SetupKeyvalOptions {
+  family = Errata,
+  prefix = @errataOpt@,
+}
+%    \end{macrocode}
+%\begin{pkgoption}{show}
+% The |show| package option shows everything
+%    \begin{macrocode}
+\DeclareBoolOption{show}
+%    \end{macrocode}
+%\end{pkgoption}
+%\begin{pkgoption}{hide}
+% The |hide| package option hides everything
+%    \begin{macrocode}
+\DeclareComplementaryOption{hide}{show}
+%    \end{macrocode}
+%\end{pkgoption}
+%\begin{pkgoption}{margins}
+% The |margins| package option
+%    \begin{macrocode}
+\DeclareBoolOption{margins}
+%    \end{macrocode}
+%\end{pkgoption}
+%\begin{pkgoption}{foots}
+% The |foots| package option
+%    \begin{macrocode}
+\DeclareBoolOption{foots}
+%    \end{macrocode}
+%\end{pkgoption}
+%\begin{pkgoption}{record}
+% The |record| package option shows everything
+%    \begin{macrocode}
+\DeclareBoolOption[true]{record}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/03/30}{requirecmddescription package option added}
+%\begin{pkgoption}{requirecmddescription}
+% The |requirecmddescription| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{requirecmddescription}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/03/30}{hyperref package option added}
+%\begin{pkgoption}{hyperref}
+% The |hyperref| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{hyperref}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/12}{cleveref package option added}
+%\begin{pkgoption}{cleveref}
+% The |cleveref| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{cleveref}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/12}{marginnote package option added}
+%\begin{pkgoption}{marginnote}
+% The |marginnote| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{marginnote}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/12}{environmenttestmode package option added}
+%\begin{pkgoption}{environmenttestmode}
+% The |environmenttestmode| package option allows to set when |\marginnnote| is used
+% instead of |\marginpar|. Errata will try to detect when |\marginnnote| should be used
+% instead of |\marginpar|, and this option allows for finetuning how safe the test is.
+% The default (|environmenttestmode=0|) will only use |\marginnnote| when it knows for
+% certain that it cannot use |\marginpar|. This is in |math mode|, in |inner mode|, and
+% in tcolorbox's |tcb@savebox| environment. There are certainly many more that should be
+% added to this list. By setting |environmenttestmode=1|, |\marginnnote| will be used
+% whenever |\@captype| is defined, which should include most floating environments such
+% as table and figure. The strictest mode |environmenttestmode=2| will force
+% |\marginnnote| to be used whenever the current environment is not 'document', which
+% means any environment outside of the root document.
+%    \begin{macrocode}
+\DeclareStringOption[0]{environmenttestmode}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{uniquelistlabels package option added}
+%\begin{pkgoption}{uniquelistlabels}
+% The |uniquelistlabels| package option
+%% Disabled by default (0), if option set, default level is 3.
+%    \begin{macrocode}
+\DeclareStringOption[0]{uniquelistlabels}[3]
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{inlinemarks package option added}
+%\begin{pkgoption}{inlinemarks}
+% The |inlinemarks| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{inlinemarks}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{inlinechanges package option added}
+%\begin{pkgoption}{inlinechanges}
+% The |inlinechanges| package option
+%    \begin{macrocode}
+\DeclareBoolOption[true]{inlinechanges}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{styles package option added}
+%\begin{pkgoption}{styles}
+% The |styles| package option
+%    \begin{macrocode}
+\DeclareStringOption[default]{styles}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{defaultargs package option added}
+%\begin{pkgoption}{defaultargs}
+% The |defaultargs| package option
+%    \begin{macrocode}
+\DeclareStringOption[]{defaultargs}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{defaultargsadd package option added}
+%\begin{pkgoption}{defaultargsadd}
+% The |defaultargsadd| package option
+%    \begin{macrocode}
+\DeclareStringOption[]{defaultargsadd}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{defaultargsdelete package option added}
+%\begin{pkgoption}{defaultargsdelete}
+% The |defaultargsdelete| package option
+%    \begin{macrocode}
+\DeclareStringOption[]{defaultargsdelete}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{defaultargsreplace package option added}
+%\begin{pkgoption}{defaultargsreplace}
+% The |defaultargsreplace| package option
+%    \begin{macrocode}
+\DeclareStringOption[]{defaultargsreplace}
+%    \end{macrocode}
+%\end{pkgoption}
+% \changes{v1.0}{2015/04/16}{defaultargsdelete package option added}
+%\begin{pkgoption}{defaultargsnote}
+% The |defaultargsnote| package option
+%    \begin{macrocode}
+\DeclareStringOption[]{defaultargsnote}
+%    \end{macrocode}
+%\end{pkgoption}
+%    \begin{macrocode}
+\ProcessKeyvalOptions{Errata}
+%% Utility macros
+\input{erratapgfkeysextra}
+\def\errataset{\pgfqkeys{/@errata@}}
+\DeclareExpandableDocumentCommand{\@errata@setvalue}{ m } {\pgfkeys{/@errata@/#1}}
+\DeclareExpandableDocumentCommand{\@errata@setvalues}{ O{} m } {\pgfkeys{/@errata@/#1.cd, #2}}
+\DeclareExpandableDocumentCommand{\@errata@getvalue}{ m } {\pgfkeysvalueof{/@errata@/#1}}
+\NewDocumentCommand{\@errata@isnotempty}{ m m }{\ifthenelse{\equal{#1}{}}{}{#2}}
+\NewDocumentCommand{\@errata@isempty}{ m m }{\ifthenelse{\equal{#1}{}}{#2}{}}
+\NewDocumentCommand{\@errata@ifstrequal}{ m m m }{\ifthenelse{\equal{#1}{#2}}{#3}{}}
+%%
+%    \end{macrocode}
+% \begin{docTarget}{Default command arguments}
+% Define the custom default arguments for the errata command
+% \end{docTarget}
 %
-% We first make sure that the |Keyval| package is loaded.
 %    \begin{macrocode}
-%<*package>
-\RequirePackage{keyval}[1997/11/10]
+\pgfkeys{
+  /@errata@/cmdkeys/.is family, /@errata@/cmdkeys,
+  defaultargs/.style={record=true, foot=true, margin=true,
+    marginargs={}, inlinemark=true, inlinechange=true},
+  defaultargsadd/.style={},
+  defaultargsreplace/.style={},
+  defaultargsdelete/.style={},
+  defaultargsnote/.style={},
+  /handlers/.errataapplystyles/.code={\xintFor ##9 in {#1} \do {\errataset{styles/##9}}},
+}
+%% Add any default arguments specified by the user
+\@errata@setvalues[cmdkeys/]{defaultargs/.append style/.expand once={{\@errataOpt@defaultargs}}}
+\@errata@setvalues[cmdkeys/]{defaultargsadd/.append style/.expand once={\@errataOpt@defaultargsadd}}
+\@errata@setvalues[cmdkeys/]{defaultargsreplace/.append style/.expand once={\@errataOpt@defaultargsreplace}}
+\@errata@setvalues[cmdkeys/]{defaultargsdelete/.append style/.expand once={\@errataOpt@defaultargsdelete}}
+\@errata@setvalues[cmdkeys/]{defaultargsnote/.append style/.expand once={\@errataOpt@defaultargsnote}}
+%%
+\if@errataOpt@show
+\@errataOpt@marginstrue%
+\@errataOpt@footstrue%
+\@errataOpt@inlinemarkstrue%
+\@errataOpt@inlinechangestrue%
+\fi
+%%
+\@ifpackageloaded{hyperref}{}{\@errataOpt@hyperreffalse }
+\@ifpackageloaded{cleveref}{}{\@errataOpt@clevereffalse }
+\if@errataOpt@marginnote
+\@ifpackageloaded{marginnote}{}{\RequirePackage{marginnote}}
+\fi
+%%
 %    \end{macrocode}
-% and then define the actions that are undertaken when the keys are encountered. Here
-% this is very simple, we just define an internal macro with the value, so that we can use
-% it later.
 %    \begin{macrocode}
-\define@key{erratum}{id}{\def\erratum@id{#1}}
-\define@key{erratum}{type}{\def\erratum@type{#1}}
-\define@key{erratum}{date}{\def\erratum@date{#1}}
-\define@key{erratum}{reported-by}{\def\erratum@reported-by{#1}}
+\newcounter{@errata@erratum}
+\newcounter{erratum@note}[@errata@erratum]
+\if@errataOpt@record\newwrite\@errata@file
+\immediate\openout\@errata@file=\jobname-errata.tex
+\AtEndDocument{\closeout\@errata@file}\fi
+%%
+\newlength{\@errata@groupindent}
+\setlength\@errata@groupindent{14.7pt}
+\newcounter{@errata@uniquelistlabels}
+\setcounter{@errata@uniquelistlabels}{\@errataOpt@uniquelistlabels}
+\newcounter{@errata@environmenttestmode}
+\setcounter{@errata@environmenttestmode}{\@errataOpt@environmenttestmode}
 %    \end{macrocode}
-%
-% \subsection{Recording Errata}
-%
-% The next step is to set up two counters for the errata.
+%%
 %    \begin{macrocode}
-\newcounter{erratum}
-\newcounter{erratum@note}[erratum]
+\NewDocumentCommand{\@errata@declareKey}{ O{UNDEF} m }
+{\@errata@setvalue{#2/.initial={#1}}}
+%%
+\NewDocumentCommand{\@errata@declareStoreKey}{ O{UNDEF} m }
+{%% Basically 'estore in', but must build macro name from argument
+\pgfkeys{/@errata@/#2/.code={\expandafter\edef\csname @errata@#2\endcsname{##1}}}%
+\pgfkeys{/@errata@/#2={#1}}%
+}
+%%
+\NewDocumentCommand{\@errata@setcmdkeys}{ O{0} m }{%
+\xintFor ##9 in {#2} \do {%
+\edef\@errata@key{##9}%
+\@errata@isnotempty{##9} {%
+  \@errata@setvalue{cmdkeys/\@errata@key/.initial=#1}%
+}}}
+%%
+\NewDocumentCommand{\errataSetFootFormat}{ m }{%
+  \@errata@declareStoreKey[#1]{footformat}%
+}
+\NewDocumentCommand{\errataSetListFormat}{ m }{%
+  \@errata@declareStoreKey[#1]{listformat}%
+}
+\@errata@declareStoreKey[type, description, location, date, id, pageref,
+inlinemark, inlinechange, uselabel, label, margin, foot, record,
+marginargs, usemarginnote, reported-by, actionid, action, actionargs, actiondescription,
+erratumlistitem, erratumlistitemtitle, erratumlisttarget, onnewgroup, onsamegroup,
+erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@errata@formatkeys
+%%
+\@errata@setcmdkeys{\@errata@formatkeys}
+\@errata@setvalue{cmdkeys/usemarginnote/.default={0pt}}
+%%
 %    \end{macrocode}
-%
-% If the |record| option is specified, we open a file for writing out the errata.
+% \begin{macro}{\errataSetKeyFormat}
+% Macro for setting the format of a key
 %    \begin{macrocode}
-\ifrecord\newwrite\errata@file
-\immediate\openout\errata@file=\jobname-errata.tex
-\AtEndDocument{\closeout\errata@file}\fi
-%    \end{macrocode}
-% \begin{macro}{\record@erratum}
-% The |\record@erratum| macro just writes its argument to the errata file together with
-% referencing information
-%    \begin{macrocode}
-\def\ErratumRef{\@ifundefined{thechapter}{}{\arabic{chapter}.}%
-\@ifundefined{thesection}{}{\ifnum\value{section}>0{}\arabic{section}\fi}%
-\@ifundefined{thesubsection}{}{\ifnum\value{subsection}>0.\arabic{subsection}\fi}%
-\@ifundefined{thesubsubsection}{}{\ifnum\value{subsubsection}>0.\arabic{subsubsection}\fi}}
-\def\record@erratum#1{\ifrecord\protected@write\errata@file{}%
-{\string\erratumItem{\ErratumRef}{#1}}\fi}
+\NewDocumentCommand{\errataSetKeyFormat}{ O{} m m }{% PGF argument pattern, key, formated output
+  \StrFmtSetKeyFormat[#1]{#2}{#3}%
+}
 %    \end{macrocode}
 % \end{macro}
+%    \begin{macrocode}
+\DeclareExpandableDocumentCommand{\@errata@getformatted}{ m m m }{% key, args, macroname
+  \StrFmtgetformatted{#1}{#2}{#3}%
+}
+\DeclareExpandableDocumentCommand{\@errata@getformattede}{ m m m }{% key, args, macroname
+  \StrFmtgetformattede{#1}{#2}{#3}%
+}
+%% Set default formater for all keys
+\SetDefaultKeylistFormat[#1]{listformats}{\@errata@formatkeys}
+\SetDefaultKeylistFormat[#1]{footformats}{\@errata@formatkeys}
+\SetDefaultKeylistFormat[#1]{errformats}{errfmt, eerrbeginfmt, eerrendfmt}
+\errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{#2}%
+%%
+\@errata@declareKey[{@errata@erratum}]{footnoteprefix}
+\@errata@declareKey[\scshape{Erratum!}]{footnotebegin}
+%%
+%% Used internally to track label and label references
+\@errata@declareKey{labelref}
+\@errata@declareStoreKey{erratumname}
+\@errata@setvalue{labelname/.gstore in=\@errata@labelname}
+\@errata@setvalue{labelname={}}
+\@errata@setvalue{prevlabel/.gestore in=\@errata@prevlabel}
+\@errata@setvalue{prevlabel={}}
+\@errata@setvalue{lastuniquelabel/.gestore in=\@errata@lastuniquelabel}
+\@errata@setvalue{lastuniquelabel={}}
+%%
+\@errata@setvalue{lastcommandinlinevalue/.gstore in=\lastcommandinlinevalue}
+\@errata@setvalue{lastcommandinlinevalue={}}
+\@errata@setvalue{inlinevalue/.initial={}}
+%    \end{macrocode}
+%\iffalse
+%    \begin{macrocode}
+%</package>
+%<*erratastyles>
+%    \end{macrocode}
+%\fi
 %
+% \begin{docTarget}{Errata default style definition}
+%% Define the default errata formatting
+% \end{docTarget}
+% \begin{savecodeexample}{style-default-formats.tex}
+%    \begin{macrocode}
+%%
+\errataset{%
+  defaultkeyformats/.style={%
+    %% Formats for the footnotes
+    footformats/description/.setStrKeyFmt={##1}{~##1},
+    footformats/action/.setStrKeyFmt={##1}{~##1},
+    footformats/actiondescription/.setStrKeyFmt={##1}{~##1},
+    %% Set the format for the action description for each erratum command
+    actionformat/add/.setStrKeyFmt={##1}{ (added text)},
+    actionformat/delete/.setStrKeyFmt={##1}{(deleted ``##1'')},
+    actionformat/replace/.setStrKeyFmt={##1+##2}{ (original text was: ``##2'')},
+    actionformat/note/.setStrKeyFmt={##1}{##1},
+    %% Errata list format
+    listformats/description/.setStrKeyFmt={##1}{~##1},
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
+      \@errata@hlink{\@errata@getvalue{labelref}}%
+      {\protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}},
+    listformats/pageref/.setStrKeyFmt={##1}{Page~\pageref{##1} },
+    listformats/type/.setStrKeyFmt={##1}{Type: ##1 },
+    listformats/date/.setStrKeyFmt={##1}{ (Date reported: ##1)},
+    listformats/reported-by/.setStrKeyFmt={##1}{Reported by: ##1},
+    listformats/action/.setStrKeyFmt={##1}{~##1},
+    listformats/actiondescription/.setStrKeyFmt={##1}{~##1},
+    listformats/erratumlistitem/.setStrKeyFmt={##1}{\item[##1]},
+    listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
+    listformats/erratumname/.setStrKeyFmt={##1}{##1},
+    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
+      {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}%
+    },
+    listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
+    %% The name of the errata labels
+    errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
+    errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
+    errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
+    %%
+    actionidformat/add/.setStrKeyFmt={##1}{Addition},
+    actionidformat/delete/.setStrKeyFmt={##1}{Deletion},
+    actionidformat/note/.setStrKeyFmt={##1}{Note},
+    actionidformat/replace/.setStrKeyFmt={##1}{Correction},
+    %%
+    listformats/onnewgroup/.setStrKeyFmt={##1}{},
+    listformats/onsamegroup/.setStrKeyFmt={##1}{},
+  },
+%    \end{macrocode}
+% \end{savecodeexample}
+%
+% \input{style-default-formats.tex}
+%
+%    \begin{macrocode}
+defaultlistandfootstyle/.code={%
+%    \end{macrocode}
+%
+% \begin{docTarget}{Default formatters}
+%% Define the default format of the errata list and footnotes
+% \end{docTarget}
+% \begin{savecodeexample}{default-erratalist-format.tex}
+%    \begin{macrocode}
+\errataSetListFormat{+erratumlistitem, +erratumlisttarget, +description}
+%    \end{macrocode}
+% \end{savecodeexample}
+% \input{default-erratalist-format.tex}
+%
+% \begin{savecodeexample}{default-footnote-format.tex}
+%    \begin{macrocode}
+\errataSetFootFormat{+description, +actiondescription}
+%    \end{macrocode}
+% \end{savecodeexample}
+% \input{default-footnote-format.tex}
+%    \begin{macrocode}
+},
+styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
+}
+%%
+%% END style: default
+%%
+%    \end{macrocode}
+%
+% \begin{docTarget}{Errata detailed style definition}
+%% Define the detailed formatting
+% \end{docTarget}
+%    \begin{macrocode}
+%%
+\errataset{%
+  detailedstylekeyformats/.style={%
+    %% Errata list format
+    listformats/description/.setStrKeyFmt={##1}{~(##1)},
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
+      {\@errata@hlink{\@errata@getvalue{labelref}}{%
+          \protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}%
+        \@errata@hlinkerratum{\the@errata@erratum}{\@errata@erratumname}}},
+    listformats/actiondescription/.setStrKeyFmt={##1}{\newline ##1},
+    %% Foot format
+    footformats/description/.setStrKeyFmt={##1}{~(##1)},
+    footformats/action/.setStrKeyFmt={##1}{~##1},
+    footformats/actiondescription/.setStrKeyFmt={##1}{~##1},
+    %% Action format
+    actionformat/replace/.setStrKeyFmt={##1+##2}{##1 (original text was: ``##2'')},
+    actionformat/add/.setStrKeyFmt={##1}{##1 (added)},
+    actionformat/delete/.setStrKeyFmt={##1}{##1 (deleted)},
+  },
+  margintcolorboxformat/.style={
+    marginfmt/marginnote/.setStrKeyFmt={##1+##2}{%
+      {\vspace{-4pt}%
+        {\begin{tcolorbox}[size=fbox,nobeforeafter,
+            colframe=red!50!white,colback=red!25!yellow!5!white,%
+            leftrule=0pt,rightrule=0pt,bottomrule=1pt,toprule=1pt,
+            arc=0cm, outer arc=0mm, % Remove the rounded corners
+            fontupper=\scriptsize,%
+            code={\pgfkeysalsofrom##1}
+            ]##2\end{tcolorbox}}}},%
+  },
+  detailedlistandfootstyle/.code={%
+    \errataSetListFormat{+erratumlistitem, +erratumlisttarget, +pageref, +action, +description, +date, +actiondescription}
+    \errataSetFootFormat{+action, -description,:, +actiondescription}
+  },
+  detailedstylesetupcode/.code={%
+    \newlength{\@errata@listindent}
+    \setlength\@errata@listindent{33mm}
+    \setlength\@errata@groupindent{16mm}
+    \setcounter{@errata@uniquelistlabels}{3}
+    \@ifpackageloaded{tcolorbox}{}{%
+      \RequirePackage[most]{tcolorbox}
+    }
+    \AtBeginEnvironment{errata} {
+      \setlist[description]{labelindent=0pt,labelwidth=\@errata@listindent,leftmargin=!}%
+    }
+  },
+  styles/detailed/.style={detailedstylekeyformats, detailedlistandfootstyle,
+    detailedstylesetupcode, margintcolorboxformat},
+}
+%%
+%% END style: detailed
+%%
+%    \end{macrocode}
+% \begin{docTarget}{Errata list table style definition}
+%% Define the tablelist style for formatting the errata list as a table
+% \end{docTarget}
+%    \begin{macrocode}
+%%
+\NewDocumentCommand{\errataamersand}{}{&}
+\NewDocumentCommand{\erratacustomhline}{}{\\\hline }
+\NewDocumentCommand{\erratacustomendline}{}{\\}
+\errataset{%
+  liststyletablekeyformats/.style={%
+    listformats/pageref/.setStrKeyFmt={##1}{\pageref{##1} },
+    listformats/description/.setStrKeyFmt={##1}{##1},
+    listformats/type/.setStrKeyFmt={##1}{Type: ##1},
+    listformats/date/.setStrKeyFmt={##1}{ (Date reported: ##1)},
+    listformats/reported-by/.setStrKeyFmt={##1}{Reported by: ##1},
+    listformats/actiondescription/.setStrKeyFmt={##1}{ ##1},
+    listformats/erratumlistitem/.setStrKeyFmt={##1}{},
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
+      {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}},
+    listformats/onnewgroup/.setStrKeyFmt={##1}{\noexpand\erratacustomhline},
+    listformats/onsamegroup/.setStrKeyFmt={##1}{\noexpand\erratacustomendline},
+    listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter%
+        \begin{longtable}{ c c c p{6cm} c }%
+           & Title & Type & Action Desc & Page \\\hline%
+          },
+    listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
+  },
+  renewerrataenvfortable/.code={%
+    \AtBeginDocument{%
+      \renewenvironment{errata}{%
+        \@errata@getformatted{listformats/erratalistbegin}{}{\@errata@tmp@erratalistbegin}%
+        \@errata@tmp@erratalistbegin%
+      }{\@errata@getformatted{listformats/erratalistend}{}{\@errata@tmp@erratalistend}%
+        \@errata@tmp@erratalistend%
+      }}
+  },
+  liststylefortable/.code={
+    \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
+      +erratumnamedlink,\noexpand\errataamersand,+action,\noexpand\errataamersand,%
+      +actiondescription,\noexpand\errataamersand,+pageref}%
+  },
+  styles/tablelist/.style={liststyletablekeyformats, renewerrataenvfortable, liststylefortable},
+}
+%%
+%% END style tablelist
+%%
+%    \end{macrocode}
+%\iffalse
+%    \begin{macrocode}
+%</erratastyles>
+%<*package>
+%    \end{macrocode}
+%\fi
+%    \begin{macrocode}
+\input{erratastyles}
+\errataset{.errataapplystyles={\@errataOpt@styles}}
+%%
+\DeclareExpandableDocumentCommand{\@errata@htargetname}{ m } {errata#1}%
+\DeclareExpandableDocumentCommand{\@errata@htargetlisttname}{ m } {erratalist#1}%
+\NewDocumentCommand{\@errata@hlink}{ m m } {#2}%
+\NewDocumentCommand{\@errata@label}{ m } {\label{#1}}%
+\NewDocumentCommand{\@errata@htargeterratum}{ O{} m m } {\@errata@label{#1}#2}
+\NewDocumentCommand{\@errata@hlinkerratum}{ m m } {\@errata@hlink{\@errata@htargetname{#1}}{#2}}
+\NewDocumentCommand{\@errata@hlinkerratumlist}{ m m } {\@errata@hlink{\@errata@htargetlisttname{#1}}{#2}}
+%%
+%% Enable internal linking if hyperref
+\if@errataOpt@hyperref
+\RenewDocumentCommand{\@errata@hlink}{ m m } {%
+\protected@edef\@errata@expanded@arg{#1}%
+\hyperlink{\@errata@expanded@arg}{#2}}%
+%%
+%% \@errata@htargeterratum
+%% ARG1: Optional argument to indicate whether to add labels,
+%% ARG2: The target name of the primary label/hyperlink
+%% ARG3: The target name of the optional custom label
+%% ARG4: The text to insert after the label/hypertarget
+%% Hypertarget creates a hyper-link anchor, used to link to this location with \hyperlink
+%% The label is needed for such as ref/pageref/cref
+\RenewDocumentCommand{\@errata@htargeterratum}{ O{} O{} m m }%
+{\Hy@raisedlink{\hypertarget{#3}{}}%
+\@errata@isempty{#1}{% Add labels
+\@errata@label{#3}% Primary label
+\@errata@isnotempty{#2}{\@errata@label{#2}}% Seconday custom label
+}{#4}}%
+\fi
+%%
+
+%    \end{macrocode}
+% \begin{docTarget}{Cleveref support}
+%% Code for cleveref support
+% \end{docTarget}
+%    \begin{macrocode}
+\if@errataOpt@cleveref
+  \AtBeginDocument{%
+    \Crefname{errata}{Err}{Errata}
+    \crefname{errata}{err}{errata}
+    \crefformat{errata}{Err(#2#1#3)}
+    \Crefformat{errata}{Err(#2#1#3)}
+  }
+  \RenewDocumentCommand{\@errata@label}{ m } {%
+    \protected@edef\@errata@expanded@arg{#1}\label[errata]{\@errata@expanded@arg}}%
+\fi
+%%
+\NewDocumentCommand{\@errata@FormatKeywords}{ O{} m m m }{% key, keys/values, format-string
+\@StrFmt@FormatKeywords[#1]{#2}{cmdkeys}{#3}{#4}%
+}
+%%
+\newcounter{@errata@lowerlabellim}
+\setcounter{@errata@lowerlabellim}{0}
+%% Return true of the label name can be set
+\newcommand\ifuniquelabeltest[1]{%
+%% Current document class doesn't have chapters.
+    \setcounter{@errata@lowerlabellim}{#1}%
+  \@ifundefined{thechapter}{%
+    \stepcounter{@errata@lowerlabellim}%
+  }{}%
+  \ifboolexpr{test {\ifnumcomp{\value{@errata@uniquelistlabels}}{=}{0}} or test {\ifnumcomp{\value{@errata@uniquelistlabels}}{>}{\value{@errata@lowerlabellim}}}}}
+%%
+\DeclareExpandableDocumentCommand{\@errata@setlabelref}{ } {%
+\@ifundefined{thechapter}{}{%
+  \ifnumcomp{\value{chapter}}{>}{0}{%
+    \@errata@setvalue{labelname=\thechapter}%
+    \@errata@setvalue{labelref={chapter.\thechapter}}%
+  }{}}%
+%% Check section
+\@ifundefined{thesection}{}{%
+  \ifnumcomp{\value{section}}{>}{0}{%
+    \@errata@setvalue{labelref={section.\thesection}}%
+    \ifboolexpr{test {\ifuniquelabeltest{1}} }{\@errata@setvalue{labelname=\thesection}}{}%
+    %% Check subsection
+    \@ifundefined{thesubsection}{}{%
+      \ifnumcomp{\value{subsection}}{>}{0}{%
+        \@errata@setvalue{labelref={subsection.\thesubsection}}%
+        \ifboolexpr{test {\ifuniquelabeltest{2}} }{\@errata@setvalue{labelname=\thesubsection}}{}%
+        %% Check subsubsection
+        \@ifundefined{thesubsubsection}{}{%
+          \ifnumcomp{\value{subsubsection}}{>}{0}{%
+            \@errata@setvalue{labelref={subsubsection.\thesubsubsection}}%
+            \ifboolexpr{test {\ifuniquelabeltest{3}} }{\@errata@setvalue{labelname=\thesubsubsection}}{}%
+          }{}%
+        }%
+      }{}% END subsubsection
+    }% END subsection
+  }{}%
+}% END section
+}
+%%
+%    \end{macrocode}
 % \begin{macro}{\erratumItem}
-%   For the errata themselves we use the following macro, which treats them as items in a
-%   |description| environment\ednote{would be better to number errata and treat them like
-%     glossary entries: 1. explanation ....... 3.4}
+% Macro for adding an item to the errata list
 %    \begin{macrocode}
-\def\erratumItem#1#2{\item[#1] #2}
+%% ARG1: Optional value to add to the end
+%% ARG2: Item title
+%% ARG2: errata-format-text
+\DeclareDocumentCommand{\erratumItem}{ O{} m m } {%
+\@errata@getformatted{listformats/erratumlistitem}{#2}{\@errata@tmplistitem}%
+\@errata@tmplistitem#3#1%
+}
+%%
 %    \end{macrocode}
 % \end{macro}
-%
+%    \begin{macrocode}
+%    \end{macrocode}
 % \begin{macro}{\printerrata}
-% \begin{macro}{\PrintErrata}
-%  The |\printerrata| inputs the errata file for the path given in its argument. Its
-%  variant |\PrintErrata| macro closes the errata file if necessary and calls
-%  |\printerrata| for its own errata. 
+% Macro for inserting an existing errata list into the current document.
 %    \begin{macrocode}
-\def\printerrata#1{\IfFileExists{#1-errata.tex}{\begin{errata}\input{#1-errata}\end{errata}}{}}
-\def\PrintErrata{\ifrecord\immediate\closeout\errata@file\fi\printerrata\jobname}
+\DeclareDocumentCommand{\printerrata}{ O{-errata.tex} m } {%
+\IfFileExists{#2#1}{%
+\begin{errata}\input{#2#1}\end{errata}}{}%
+}
 %    \end{macrocode}
 % \end{macro}
-% \end{macro}
-%
-% \begin{environment}{errata}
-%  The |errata| environment wraps the errata items. Currently, this is just a
-%  |description| environment.
+%%
+% \begin{macro}{\PrintErrata}
+% Macro for inserting the errata list produced for the current document.
 %    \begin{macrocode}
-\newenvironment{errata}{\begin{description}}{\end{description}}
+\DeclareDocumentCommand{\PrintErrata}{} {%
+\if@errataOpt@record\immediate\closeout\@errata@file\fi%
+\printerrata{\jobname}%
+}
+%    \end{macrocode}
+% \end{macro}
+%    \begin{macrocode}
+%%
+\newcommand\ifdomargin[0]{
+  \ifboolexpr{ bool{@errataOpt@margins} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/margin}}{true}}}}}
+\newcommand\ifdofoot[0]{
+  \ifboolexpr{ bool{@errataOpt@foots} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/foot}}{true}}}}}
+\newcommand\ifdorecord[0]{
+  \ifboolexpr{ bool{@errataOpt@record} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/record}}{true}}}}}
+\newenvironment{errata}{\makeatletter%
+\begin{description}}{\end{description}%
+\makeatother
+}
+%%
+%    \end{macrocode}
+% \begin{environment}{erratum}
+% The erratum environment used for creating an extended errata.
+%    \begin{macrocode}
+\DeclareDocumentEnvironment{erratum}{ O{} m }% keys, explanation
+{\@erratum@cmd{}{#1}{action={Long errata}, description={#2}}%
+\expandafter\@errata@htargeterratum{\@errata@htargetname{\the@errata@erratum}}{}%
+\if@errataOpt@foots%
+\footnotetext[\value{@errata@erratum}]{{\@errata@getvalue{footnotebegin} #2}}%
+\fi%
+\protected@edef\@errata@tmp@marginargs{\@errata@getvalue{cmdkeys/marginargs}}%
+\ifboolexpr{test {\ifdomargin} }%
+{\@errata@getformatted{errformats/eerrbeginfmt}{\@errata@hlinkerratumlist{\the@errata@erratum}{\arabic{@errata@erratum}}}{\@errata@tmpfmtvalue}%
+\@errata@marginnote[\@errata@tmp@marginargs]{\@errata@tmpfmtvalue}%
+}{}%
+\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\def\eAdd##1{[##1]$_a$}%
+\def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\if@errataOpt@foots\@footnotetext{deleted: ##1}\fi}%
+\def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\if@errataOpt@foots\@footnotetext{was: ##1}\fi}
+\ignorespaces}%
+{\ifboolexpr{test {\ifdomargin} }%
+{\@errata@getformatted{errformats/eerrendfmt}{\@errata@hlinkerratumlist{\the@errata@erratum}{\arabic{@errata@erratum}}}{\@errata@tmpfmtvalue}%
+\@errata@marginnote[\@errata@tmp@marginargs]{\@errata@tmpfmtvalue}%
+}{}%
+}%
 %    \end{macrocode}
 % \end{environment}
-%
-% \subsection{Short Errata}
-%\ednote{these could do with a bit of code refactoring}
-% \begin{macro}{\erratumAdd}
 %    \begin{macrocode}
-\newcommand{\erratumAdd}[3][]% keyvals, explanation, new
-{\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-\ifmark[\fi #3\ifmark]$_a^{\arabic{erratum}}$\fi%
-\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (added text)}\fi}
+%%
+\def\erratum@mark{\stepcounter{erratum@note}{}
+\def\@thefnmark{\arabic{@errata@erratum}:\arabic{erratum@note}}}
+%    \end{macrocode}
+% \begin{macro}{\erratatemessage}
+%% Write info to log file
+%    \begin{macrocode}
+\NewDocumentCommand{\erratamessage}{ m } {% erratakeyvalues
+\ifnum\value{@errata@erratum}>0\typeout{}%
+\typeout{This document contains \arabic{@errata@erratum} Errata; see \jobname-errata.tex!}%
+\typeout{}%
+\fi}
 %    \end{macrocode}
 % \end{macro}
-% 
-% \begin{macro}{\erratumDelete}
+%
+%%
+% \begin{macro}{\@errata@dorecord}
 %    \begin{macrocode}
-\newcommand{\erratumDelete}[3][]% keyvals, explanation, old
-{\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-\ifmark[]$_d^{\arabic{erratum}}$\else\ignorespaces\fi%
-\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (deleted ``#3'')}\fi}
+\NewDocumentCommand{\@errata@dorecord}{ O{} m m m } {% formattype, listformat, argsstring
+\ifboolexpr{ test {\ifdorecord} }{%
+%% Get the formatted code for a new group
+  \ifboolexpr{ not test {\ifthenelse{\equal{\@errata@getvalue{cmdkeys/onnewgroup}}{}}} }%
+  {%
+    \@errata@getformatted{listformats/onnewgroup}{\@errata@labelname}{\@errata@tmp@ongroup}%
+  }%
+  {\@errata@getformatted{listformats/onsamegroup}{\@errata@labelname}{\@errata@tmp@ongroup}}%
+\@errata@FormatKeywords[errata@formatted@output]{#2}{#4}{#3}%
+\@errata@record[\@errata@tmp@ongroup]{\expandonce{\errata@formatted@output}}%
+}{}%
+}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@errata@record}
+%% Create an entry in the errata list produced by PrintErrata
+%    \begin{macrocode}
+\NewDocumentCommand{\@errata@record}{ O{} m } {% erratakeyvalues
+\@errata@getformatted{errformats/errfmt}{\arabic{@errata@erratum}}{\@errata@erratumname}%
+\@errata@setvalue{cmdkeys/erratumlistitemtitle/.get=\@errata@tmp@itemtitle}%
+\@errata@getformattede{listformats/erratumlistitemtitle}{\@errata@tmp@itemtitle}{\@errata@tmp@formatteditemtitle}%
+\protected@write\@errata@file{}%
+{\string\erratumItem[#1]{\@errata@tmp@formatteditemtitle}{#2}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%    \begin{macrocode}
+\newif\if@errata@inbadenvironment
+\newif\if@errata@inknownbadenvironment
+%%
+\NewDocumentCommand{\@erratum@checkenvironment}{}{%
+\@errata@inknownbadenvironmentfalse%
+\@errata@inbadenvironmentfalse%
+%%
+\ifinner%
+\@errata@inknownbadenvironmenttrue%
+\fi%
+\ifmmode%
+\@errata@inknownbadenvironmenttrue%
+\fi%
+\ifthenelse{\equal{\@currenvir}{tcb@savebox}}%
+{\@errata@inknownbadenvironmenttrue}%
+{}%
+%%
+\ifnumgreater{\value{@errata@environmenttestmode}}{0}%
+{% At least 1, so lets consider any environment with \@captype dangerous
+\ifx\@captype\@undefined%
+\else%
+\@errata@inbadenvironmenttrue%
+\fi%
+\ifnumequal{\value{@errata@environmenttestmode}}{2}%
+{%
+\ifthenelse{\equal{\@currenvir}{document}}%
+{}{\@errata@inbadenvironmenttrue}%
+}{}% End == 2
+}{}% End > 0
+}
+\edef\emptyval{}%
+%% Create the margin note
+\NewDocumentCommand{\@errata@marginnote}{ O{\emptyval} m }{%
+%% We use marginpar if we can, as it handles stacking multiple values vertically
+\let\@errata@marginnote@cmd\marginpar%
+%% If captype is defined, we're probably inside a float
+\if@errata@inknownbadenvironment%
+\let\@errata@marginnote@cmd\marginnote%
+\fi
+\if@errata@inbadenvironment%
+\let\@errata@marginnote@cmd\marginnote%
+\fi
+%% If user provided argument 'usemarginnote', we use \marginnote macro
+\protected@edef\@errata@tmp@marginshift{\@errata@getvalue{cmdkeys/usemarginnote}}%
+\@errata@isnotempty{\@errata@tmp@marginshift}{%
+  \let\@errata@marginnote@cmd\marginnote%
+  \renewcommand*{\marginnotevadjust}{\@errata@tmp@marginshift}%
+}%
+\@errata@getformatted{marginfmt/marginnote}{{#1}+{#2}}{\@errata@tmp@marginfmtvalue}%
+\@errata@marginnote@cmd{\@errata@tmp@marginfmtvalue}%
+}
+%% Do the pagelayout of the errata (inline changes, margin, and footnote)
+\NewDocumentCommand{\@errata@dolayoutonpage}{ m m m m }{% type(a,r,d), original, change, errata-formatted-text
+\ifboolexpr{test {\ifdomargin} }%
+{\@errata@getformatted{errformats/errfmt}{\@errata@hlinkerratumlist{\the@errata@erratum}{\arabic{@errata@erratum}}}{\@errata@tmpfmtvalue}%
+  \protected@edef\@errata@tmp@marginargs{\@errata@getvalue{cmdkeys/marginargs}}%
+  \@errata@marginnote[\@errata@tmp@marginargs]{\@errata@tmpfmtvalue}%
+}{}%
+%% Handle inline changes
+\ifboolexpr{ bool{@errataOpt@inlinechanges} and
+  test {\ifthenelse{\equal{\@errata@getvalue{cmdkeys/inlinechange}}{true}}} }%
+{% Make inline change
+%%\@errata@setvalues{lastcommandinlinevalue={#3}, inlinevalue={#3}}
+  \@errata@setvalue{lastcommandinlinevalue={#3}}%
+  \@errata@setvalue{inlinevalue={#3}}%
+}%
+{% Use original value
+  \@errata@setvalue{lastcommandinlinevalue={#2}}%
+  \@errata@setvalue{inlinevalue={#2}}%
+}%
+%% If trying to set lastcommandinlinevalue=inlinevalue here with
+%% (\@errata@setvalue{lastcommandinlinevalue=\@errata@getvalue{inlinevalue}}%),
+%% it adds an unwanted space to lastcommandinlinevalue for some reason. Therefore,
+%% both lastcommandinlinevalue and inlinevalue are set to the same value separately.
+%%
+\ifboolexpr{ bool{@errataOpt@inlinemarks} and
+  test {\ifthenelse{\equal{\@errata@getvalue{cmdkeys/inlinemark}}{true}}} }%
+{% Use add inlinemark
+  \@errata@setvalue{lastcommandinlinevalue={[]}}%
+  \@errata@setvalue{inlinevalue/.prefix={[}}%
+  \@errata@setvalue{inlinevalue/.append={]\ensuremath{_#1^{\arabic{@errata@erratum}}}}}%
+}{}%
+\protected@edef\@errata@tmp@dolabel{}%
+\ifmmode% In math mode, we can't add a label
+\eappto\@errata@tmp@dolabel{nolabel}%
+\fi%
+\@errata@htargeterratum[\@errata@tmp@dolabel][\@errata@getvalue{cmdkeys/label}]{\@errata@htargetname{\the@errata@erratum}}{\@errata@getvalue{inlinevalue}}%
+%%
+\ifboolexpr{test {\ifdofoot} }{%
+  \protected@edef\@errata@tmp@footprefix{\arabic{\@errata@getvalue{footnoteprefix}}}% Expand the formatting code here, and not inside the footnote macro
+  \expandafter\footnotetext\expandafter[\@errata@tmp@footprefix]%
+  {{\@errata@getvalue{footnotebegin}}%
+    \@errata@isnotempty{#4}{#4}}%
+}{}%
+}%
+%%
+\NewDocumentCommand{\@erratum@cmdinit}{}{%
+\@erratum@setprevispace% Handle if there was a previous white space glue
+\@erratum@checkenvironment%
+}
+%% ARG1: cmddefaultargs string
+%% ARG2: Key/Args from cmd
+%% ARG3: extra Key/Args
+\NewDocumentCommand{\@erratum@cmd}{ m m m } {%
+\refstepcounter{@errata@erratum}%
+\@errata@setcmdkeys[]{\@errata@formatkeys}% Reset all values
+%% Apply the default args
+\@errata@setvalues[cmdkeys/]{defaultargs, #1}%
+%%
+\@errata@setvalue{cmdkeys/uselabel={\@errata@htargetname{\the@errata@erratum}}}%
+\@errata@getformatted{errformats/errfmt}{\arabic{@errata@erratum}}{\@errata@erratumname}%
+\@errata@setvalue{cmdkeys/erratumname/.expand once=\@errata@erratumname}%
+%%
+\@errata@setvalues[cmdkeys/]{#2, #3}%
+\@errata@setvalues{cmdkeys/actionid/.get=\@errata@tmp@actionid}%
+%% Set 'action' and 'actiondescription' based on actionid
+\@errata@isnotempty{\@errata@tmp@actionid}{%
+  \@errata@setvalues{cmdkeys/actionargs/.get=\@errata@tmp@actionargs}%
+  \@errata@getformattede{actionformat/\@errata@tmp@actionid}{\@errata@tmp@actionargs}{\@errata@tmpfmtvalue}%
+  \@errata@setvalues[cmdkeys/]{actiondescription/.expanded={\@errata@tmpfmtvalue}}%
+  \@errata@getformattede{actionidformat/\@errata@tmp@actionid}{}{\@errata@tmpfmtvalue}%
+  \@errata@setvalues[cmdkeys/]{action/.expanded={\@errata@tmpfmtvalue}}%
+}%
+%% Define macro for the args string
+\protected@edef\@errata@argsstring{#2}%
+\@errata@isnotempty{\@errata@argsstring}{%
+  \eappto\@errata@argsstring{, }%
+}%
+\@errata@setvalue{prevlabel=\@errata@labelname}%
+\@errata@setlabelref{}%
+\ifboolexpr{ test {\ifdorecord} }{%
+  %% Compare current label with previous. Print only if not already printed
+  \ifnumcomp{\value{@errata@uniquelistlabels}}{>}{0}%
+  {% True
+    \ifthenelse{\expandafter\equal{\@errata@lastuniquelabel}{\@errata@labelname}}%
+    {\@errata@setvalue{labelname={}}% Hide the label, if it equals the previous label
+      \@errata@setvalue{cmdkeys/onnewgroup={}}%
+    }%
+    {\@errata@setvalue{prevlabel/.expanded=\@errata@labelname}%
+      \@errata@setvalue{cmdkeys/onnewgroup/.expanded=\@errata@labelname}%
+    }%
+    \@errata@setvalue{lastuniquelabel/.expanded=\@errata@labelname}%
+  }{\@errata@setvalue{prevlabel=\@errata@labelname}}%
+}{}%
+%%
+\@errata@setvalue{cmdkeys/erratumlistitemtitle={{\@errata@getvalue{labelref}}+{\@errata@labelname}}}%
+\@errata@setvalue{cmdkeys/erratumnamedlink/.expand once={{\@errata@getvalue{labelref}}+{\@errata@erratumname}}}%
+\protected@eappto\@errata@argsstring{#3}%
+%% Add action description
+\protected@eappto\@errata@argsstring{, actiondescription={\@errata@getvalue{cmdkeys/actiondescription}}}%
+\protected@eappto\@errata@argsstring{, action={\@errata@getvalue{cmdkeys/action}}}%
+%% Handle pageref reference
+\@errata@isnotempty{\@errata@getvalue{cmdkeys/uselabel}}{%
+  \protected@eappto\@errata@argsstring{, pageref={\@errata@getvalue{cmdkeys/uselabel}}}%
+}%
+\protected@eappto\@errata@argsstring{, erratumlistitemtitle={\@errata@getvalue{cmdkeys/erratumlistitemtitle}}}%
+\protected@eappto\@errata@argsstring{, erratumnamedlink={\@errata@getvalue{cmdkeys/erratumnamedlink}}}%
+%% Set the link target for this errata in the errata list (erratalist<number>)
+\xappto\@errata@argsstring{, erratumlisttarget={\@errata@htargetlisttname{\the@errata@erratum}}}%
+}
+%%
+%% Macros for handling spacing
+%%
+\newcommand\ifstrequalexpand{\expandafter\ifstrequal\expandafter}%
+%%
+%% Handle if space after macro call should be ignored
+\NewDocumentCommand{\@erratum@handleprevisspace}{}{%
+\ifhmode%
+\ifboolexpr{ bool {@errata@prevspace} and test {\ifstrequalexpand{\lastcommandinlinevalue}{}} }{%
+\ignorespaces}{}%
+\fi%
+}
+%%
+\newif\if@errata@prevspace
+%%
+\NewDocumentCommand{\@erratum@setprevispace}{}{%
+\ifhmode%
+\ifdim \lastskip=\z@%
+\@errata@prevspacefalse%
+\else%
+\@errata@prevspacetrue%
+\fi%
+\fi%
+}
+%    \end{macrocode}
+%%
+%% User commands for registering errata changes
+% \begin{macro}{\erratumAdd}
+%%
+%% Macro for creating an Addition
+%%
+%    \begin{macrocode}
+\NewDocumentCommand{\@erratum@Add}{ O{} m }{% keyvals, new
+\@erratum@cmdinit%
+{% Group is necessary here to handle cref reference format for label type `@errata@erratum'.
+%% \@erratum@cmd must be within the group, as pgfkeys are group local
+\@erratum@cmd{defaultargsadd}{#1}{actionid={add}, actionargs={#2}}%
+\@errata@dolayoutonpage{a}{}{#2}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
+\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+}%
+%% Handle if the space after the macro call should be ignored
+\@erratum@handleprevisspace%
+}
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\erratumReplace}
+%%
+%% Macro for creating a Replacement
+%%
 %    \begin{macrocode}
-\newcommand{\erratumReplace}[4][]% keyvals, explanation, old, new
-{\setkeys{erratum}{#1}\stepcounter{erratum}\record@erratum{#2}%
-\ifmargins\marginpar{Err(\arabic{erratum})}\fi\immediate\typeout{Erratum!}%
-\ifmark[\fi #4\ifmark]$_r^{\arabic{erratum}}$\fi%
-\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum!}}%
-\@ifundefined{erratum@type}{}{(\erratum@type)} #2 (original text was: ``#3'')}\fi}
+\NewDocumentCommand{\@erratum@Replace}{ O{} m m }{% keyvals, old, new
+\@erratum@cmdinit%
+{% Group is necessary here to handle cref reference format for label type `@errata@erratum'.
+%% \@erratum@cmd must be within the group, as pgfkeys are group local
+\@erratum@cmd{defaultargsreplace}{#1}{actionid={replace}, actionargs={#3+#2}}%
+\@errata@dolayoutonpage{r}{#2}{#3}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
+\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+}%
+%% Handle if the space after the macro call should be ignored
+\@erratum@handleprevisspace%
+}
 %    \end{macrocode}
 % \end{macro}
-%
-% \subsection{Extended Errata}
-% 
-% \begin{environment}{erratum}
-% The |erratum| environment is for extended errata. It steps the counters, marks the
-% margins (if desired) and sets up local macros
+% \begin{macro}{\erratumDelete}
+%%
+%% Macro for creating a Deletion
+%%
 %    \begin{macrocode}
-\newenvironment{erratum}[2][]% keys, explanation
-{\setkeys{erratum}{#1}\stepcounter{erratum}%
-\edef\new@number{\theerratum}\message{Erratum \new@number!}%
-\iffoots\footnotetext[\value{erratum}]{{\scshape{Erratum}%
-\@ifundefined{erratum@type}{}{(\erratum@type)}: #2}}%
-\ifmargins\marginpar{BErr(\new@number)}\fi\fi%
-\record@erratum{#2}%
-%    \end{macrocode}
-% \begin{macro}{\eAdd}
-% This macro just passes through the argument, and delimits it, so that the extent
-% of the insertion can be seen. 
-%    \begin{macrocode}
-\def\eAdd##1{\ifmark[\fi ##1\ifmark]$_a$\fi}%
+\NewDocumentCommand{\@erratum@Delete}{ O{} m }{% keyvals, removed
+\@erratum@cmdinit%
+{% Group is necessary here to handle cref reference format for label type `@errata@erratum'.
+%% \@erratum@cmd must be within the group, as pgfkeys are group local
+\@erratum@cmd{defaultargsdelete}{#1}{actionid={delete}, actionargs={#2}}%
+\@errata@dolayoutonpage{d}{#2}{}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
+\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+}%
+\@erratum@handleprevisspace%
+}
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\eDelete}
-% This macro just passes through the argument, and explains what was deleted in a
-% footnote. 
+% \begin{macro}{\erratumNote}
+%%
+%% Macro for creating a Note entry
+%%
 %    \begin{macrocode}
-\def\eDelete##1{\erratum@mark\ifmark[]$_d^{\@thefnmark}$\else\ignorespaces\fi%
-\iffoots\@footnotetext{deleted: ##1}\fi}%
-%    \end{macrocode}
-% \begin{macro}{\eReplace} 
-% This macro just passes through the second argument, delimits it and marks the
-% replacement in a footnote. 
-%    \begin{macrocode}
-\def\eReplace##1##2{\erratum@mark\ifmark[\fi ##2\ifmark]$_r^{\@thefnmark}$\fi%
-\iffoots\@footnotetext{was: ##1}\fi}%
-\ignorespaces}
-%    \end{macrocode}
-% \end{macro}
-% The end part of the |erratum| environment is almost trivial, it only marks the margin
-% with the end mark.
-%    \begin{macrocode}
-{\ifmargins\marginpar{EErr(\new@number)}\fi}
+\NewDocumentCommand{\@erratum@Note}{ O{} m }{% keyvals, message
+\@erratum@cmdinit%
+{% Group is necessary here to handle cref reference format for label type `@errata@erratum'.
+%% \@erratum@cmd must be within the group, as pgfkeys are group local
+\@erratum@cmd{defaultargsnote}{#1}{actionid={note}, actionargs={#2}}%
+\@errata@dolayoutonpage{n}{}{#2}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
+\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+}%
+%% Handle if the space after the macro call should be ignored
+\@erratum@handleprevisspace%
+}
 %    \end{macrocode}
 % \end{macro}
-% \end{environment}
-% 
-% \begin{macro}{\erratum@mark}
-% This macro is used by the local macros of the |erratum| environment, it sets the
-% footnote label by redefining the {\LaTeX}-internal |\@thefnmark| macro appropriately. 
 %    \begin{macrocode}
-\def\erratum@mark{\stepcounter{erratum@note}{}%
-\def\@thefnmark{\arabic{erratum}:\arabic{erratum@note}}}
+%% Define with mandatory description argument if the requirecmddescription option is true
+\if@errataOpt@requirecmddescription
+\NewDocumentCommand{\erratumAdd}{ O{} m m }{% keyvals, description, new
+  \@erratum@Add[#1,description={#2}]{#3}}%
+\NewDocumentCommand{\erratumReplace}{ O{} m m m }{% keyvals, description, old, new
+\@erratum@Replace[#1,description={#2}]{#3}{#4}}%
+\NewDocumentCommand{\erratumDelete}{ O{} m m }{% keyvals, description, removed
+  \@erratum@Delete[#1,description={#2}]{#3}}%
+\NewDocumentCommand{\erratumNote}{ O{} m m }{% keyvals, description, note
+  \@erratum@Note[#1,description={#2}]{#3}}%
+%% And define without description if the requirecmddescription option is false
+\else
+\let\erratumDelete\@erratum@Delete
+\let\erratumAdd\@erratum@Add
+\let\erratumReplace\@erratum@Replace
+\let\erratumNote\@erratum@Note
+\fi
 %    \end{macrocode}
-% \end{macro}
-%
-% \subsection{Generating Statistics}
-%
-% \begin{macro}{\ednotemessage}
-%    The |\ednotemessage| makes use of the counter |ednote| and generates a message. 
+%\iffalse
 %    \begin{macrocode}
-\def\ednotemessage{\ifnum\value{erratum}>0\typeout{}%
-\typeout{This document contains \arabic{erratum} Errata; see \jobname-errata.tex!}%
-\typeout{}\fi}
 %</package>
 %    \end{macrocode}
-% \end{macro}
+%\fi
+% \newpage\section{The Errata of this Document}
 % \PrintErrata
+% \newpage
+% \PrintIndex
 % \Finale
-% \endinput 
-% LocalWords:  dtx keyval tex thechapter thesection thesubsection BErr EErr iffalse exfig
-% LocalWords:  thesubsubsection NeedsTeXFormat maketitle jobname oldtext newtext ednote
+%\iffalse
+\endinput
 % LocalWords:  alltogether erratamessage erratamessage thebook.tex theerrata.tex thebook
 % LocalWords:  newpage ifmargins iffoots newif marginsfalse footsfalse ifrecord newwrite
 % LocalWords:  recordfalse marginstrue footstrue recordtrue newcounter openout ifnum
 % LocalWords:  subsubsection newenvironment newcommand keyvals setkeys stepcounter texttt
 % LocalWords:  marginpar typeout scshape theerratum ednotemessage texttt nomark nomargins
-%
-% Local Variables:
-% mode: doctex
-% TeX-master: t
-% End:
-%  LocalWords:  Schroll-Fleischer nofoots colors ifmark ignorespaces doctex
+% LocalWords:  Schroll-Fleischer nofoots colors ifmark ignorespaces doctex
+%%% Local Variables:
+%%% fill-column: 79
+%%% TeX-master: "errata.dtx"
+%%% End:
+%\fi

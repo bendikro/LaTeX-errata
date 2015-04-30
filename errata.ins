@@ -1,5 +1,5 @@
 %%
-%% This file generates files required to use the ed package.
+%% This file generates files required to use the errata package.
 %% At your command prompt write
 %%
 %%     latex errata.ins
@@ -11,15 +11,26 @@
 %% Either version 1.0 or, at your option, any later version.
 %%
 \input docstrip
+
+%\usedir{tex/latex/listings}
+%\keepsilent
+\askforoverwritefalse
+
+\nopreamble
+
 \preamble
 \endpreamble
 
-%\usedir{tex/latex/listings}
-\keepsilent
-\askforoverwritefalse
-
-% generate base package
-\generate{\file{errata.sty}{\from{errata.dtx}{package}}}
+\generate{
+\file{strkeyformatter.sty}{\from{errata.dtx}{strkeyformatter.sty}}
+\file{erratapgfkeysextra.tex}{\from{errata.dtx}{erratapgfkeysextra.tex}}
+\file{build/preamble.tex}{\from{errata.dtx}{preamble.tex}}
+\file{build/erratadocutil.tex}{\from{errata.dtx}{erratadocutil.tex}}
+\file{linecounter.sty}{\from{errata.dtx}{linecounter.sty}}
+%\file{erratastyles.tex}{\from{erratastyles.dtx}{erratastyles}}
+\file{erratastyles.tex}{\from{errata.dtx}{erratastyles}}
+\file{errata.sty}{\from{errata.dtx}{package}}
+}
 
 \Msg{*}
 \Msg{* You probably need to move the file errata.sty into a directory searched by TeX.}

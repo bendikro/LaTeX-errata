@@ -1,0 +1,27 @@
+%%
+%% This is file `linecounter.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% errata.dtx  (with options: `linecounter.sty')
+%% 
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{linecounter}[]
+\newread\File
+\makeatletter
+\newcommand{\CountLinesInFile}[2]{% Filename, counter name
+  \@ifundefined{c@#2}%
+  {\newcounter{#2}}{}
+  \setcounter{#2}{-1}
+  \openin\File=#1
+  \@whilesw\unless\ifeof\File\fi{%
+    \stepcounter{#2}
+    \readline\File to \line
+  }
+  \closein\File
+}
+\makeatother
+\endinput
+%%
+%% End of file `linecounter.sty'.

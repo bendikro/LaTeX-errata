@@ -1,0 +1,32 @@
+%%
+%% This is file `erratapgfkeysextra.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% errata.dtx  (with options: `erratapgfkeysextra.tex')
+%% 
+%% Fix setting global values with pgfkeys
+\long\def\pgfkeysgdef#1#2{%
+  \long\def\pgfkeys@temp##1\pgfeov{#2}%
+  \global\pgfkeyslet{#1/.@cmd}{\pgfkeys@temp}%
+  \pgfkeyssetvalue{#1/.@body}{#2}%
+}
+\long\def\pgfkeysgaddvalue#1#2#3{%
+  {%
+    \toks0{#2}%
+    \pgfkeysifdefined{#1}
+    {\pgfkeys@temptoks\expandafter\expandafter\expandafter{\csname pgfk@#1\endcsname}}%
+    {\pgfkeys@temptoks{}}%
+    \toks1{#3}%
+    \xdef\pgfkeys@global@temp{\the\toks0 \the\pgfkeys@temptoks \the\toks1}% believe or don't: the spaces are important
+  }%
+  \global\pgfkeyslet{#1}\pgfkeys@global@temp%
+}
+\pgfkeysdef{/handlers/.gcode}{\pgfkeysgdef{\pgfkeyscurrentpath}{#1}}
+\pgfkeys{/handlers/.gappend/.code={\pgfkeysgaddvalue{\pgfkeyscurrentpath}{}{#1}}}
+\pgfkeys{/handlers/.gstore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\gdef#1{##1}}}}
+\pgfkeys{/handlers/.gestore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\global\edef#1{##1}}}}
+\endinput
+%%
+%% End of file `erratapgfkeysextra.tex'.

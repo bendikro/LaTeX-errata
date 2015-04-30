@@ -1,0 +1,426 @@
+%\documentclass[a4paper,12pt]{memoir}
+\documentclass[a4paper,12pt]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.6in,marginparsep=3mm]{geometry}
+
+\usepackage{pgfkeys}
+\usepackage{caption}
+
+\setkeys{caption}{debug=0}
+\PassOptionsToPackage{log-declarations=false}{xparse}
+
+\usepackage[bookmarks,breaklinks,pdfpagelabels,
+colorlinks=true,  % Colors links instead of ugly boxes
+linkcolor=black,  % Color of internal links
+]{hyperref}[2012/11/06] % Reference package, must be before cleveref
+
+\usepackage[noabbrev,%
+nameinlink
+]{cleveref}[2013/12/28]
+
+\usepackage{longtable}
+%\usepackage{booktabs}
+
+\usepackage{xparse}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\tcbuselibrary{minted}
+\tcbuselibrary{listings}
+\tcbuselibrary{breakable}
+\tcbuselibrary{skins}
+\usetikzlibrary{shadings}
+
+\input{erratadocutil}
+
+\usepackage{tabularx}
+\usepackage[strings]{underscore} % Allow underscores in strings and filenames
+
+\tracingstats=2
+
+\usepackage[
+%show=true,
+margins=true,
+foots=true,
+record=true,
+%cleveref=false,
+%hyperref=true,
+defaultargs={margin=true},
+%defaultargsadd={margin=false},
+%defaultargsdelete={margin=false},
+requirecmddescription=false,
+%marginnote=false,
+uniquelistlabels=1,
+%inlinechanges=false,
+environmenttestmode=1,
+inlinemarks=true,
+styles={default, detailed, tablelist},
+]{errata}[2015/04/16]
+
+\errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
+{\vspace{-4pt}%
+\begin{tcolorbox}[size=fbox,nobeforeafter,
+    colframe=red!50!white,colback=red!25!yellow!5!white,%
+    fontupper=\scriptsize,%
+    bottomrule=1pt,toprule=1pt,leftrule=0pt,rightrule=0pt,
+%    arc=0cm, outer arc=0mm, % Remove the rounded corners
+    arc=0cm,
+    outer arc=0mm, % Remove the rounded corners
+    code={\pgfkeysalsofrom#1}
+    ]#2\end{tcolorbox}}}%
+
+\crefname{paragraph}{\S}{\S\S} % default is {paragraph}{paragraphs}
+
+\setcounter{secnumdepth}{6}
+
+\usepackage[inline]{enumitem}
+\newlist{inlinelist}{enumerate*}{1}
+\setlist*[inlinelist]{%
+  label*=\textit{\alph*)},
+}
+
+
+\makeatletter
+\newcommand{\getCurrentSectionNumber}{%
+  \ifnum\c@section=0 %
+  \thechapter
+  \else
+  \ifnum\c@subsection=0 %
+  \thesection
+  \else
+  \ifnum\c@subsubsection=0 %
+  \thesubsection
+  \else
+  \thesubsubsection
+  \fi
+  \fi
+  \fi
+}
+\makeatother
+
+
+\newlength{\namelen}
+\setlength\namelen{39mm}
+
+
+\NewDocumentCommand{\erratatest}{ m m }
+{\noindent {\makebox[\namelen][l]{\textbf{#1}}}: #2\\}
+
+\begin{document}
+
+
+\chapter{Chapter 1}\label{chap-one}
+
+\immediate\typeout{Erratum BEGIN}%
+
+
+\erratumAdd[margin=false, foot=true, record=true, description={SKROT}]{In par1}
+
+\erratumAdd[margin=false, foot=true, record=true, description={}]{In par1}
+
+%\footnotetext[1]{CREF: \cref{errata1} }%
+
+ERRAT1 CREF: \cref{errata1}
+
+ERRATA1 CPAGEREF: \cpageref{errata1}
+
+
+Therefore, the'
+\erratumReplace[id={testid}, type={Correction}, description={grammar}, reported-by=bro]{results}{result}'
+
+\section{Section 1.1}\label{sect-one}
+
+Note test \erratumNote[marginargs={before,after,%
+,colframe=blue!50!white}]{Changes to paragraph} space before?
+
+
+
+What's for? Its contents is delivered into the token list par1 \erratumAdd{added in par1}.
+
+TeX is reading when it switches from vertical to horizontal mode. \erratumAdd{added in par2} This happens when TeX, in vertical mode, sees a horizontal command par2.
+
+At that time the horizontal command is set aside; \erratumAdd{added in par3} before examining it again par3.
+
+
+
+Adding comma here\erratumAdd{,} horizontal command is set aside;
+
+Sect1: \cref{sect-one}  (\getCurrentSectionNumber)
+
+Replace: Next' \erratumReplace{word}{WORD} 'has been replaced.
+
+
+
+%Hyperlink: '\hyperlink{firstreplace}{LINK}'
+
+
+Add: A word has been' \erratumAdd{added} 'here.
+
+
+Delete: A word has been' \erratumDelete{removed} 'removed here, and here' \erratumDelete{removed}'.
+
+\erratumAdd[type={refining}, description={Added listing}]{chap-one}
+%\erratumAdd[type={refining}, description={Added listing}, margin=true,foot=true,record=true,inlinechange=true,inlinemark=true]{CREF INSIDE \cref{chap-one}}
+
+
+\erratumNote{Changes to paragraph} \erratumNote{Changes to paragraph}
+
+
+\paragraph{TEST paragrah:}
+
+Delete: A word has been removed
+
+with space:' \erratumDelete{removed} 'and without'\erratumDelete{removed}'.
+
+ \erratumDelete{removed} at beginning of sentence.
+
+Delete comma'\erratumDelete{,} 'prev space is removed.
+
+Removed a word'\erratumDelete{removed} 'with no previous space.
+
+
+
+SECT1: \cref{sect-one}
+SECT1PREF \cpageref{sect-one}
+
+
+\erratumReplace[id={testid}, description={grammar}]{tulls}{tull}
+,\erratumAdd[id={testid}, type={Addition}, date={2015/03/18}]{added},
+
+
+\subsection{Subsection 1.1}\label{subsect-one}
+
+
+
+SUBSECT1.1: \cref{subsect-one} (\getCurrentSectionNumber)
+
+
+\erratumAdd[inlinemark=false]{noinline}
+
+
+\erratumReplace[type={grammar}, description={Fix gramar}]{in}{of}
+
+\subsubsection{Subsubsection 1.1.1}\label{subsubsect-one}
+
+\erratumAdd[id={testid}, description={grammar}]{insubsubsect}
+
+SUBSUBSECT1: \cref{subsubsect-one} (\getCurrentSectionNumber)
+
+\paragraph{Paragraph 1}\label{par-one}
+
+\erratumAdd[id={testid}, description={grammar}]{inparagraph}
+
+PAR1: \cref{par-one}  (\getCurrentSectionNumber)
+
+%ERR1: \cref{errata1}
+
+ERR1 ref: \ref{errata1}
+
+
+
+
+\subsubsection{Subsubsection 1.1.2}\label{subsubsect-two}
+
+\erratumAdd[id={testid}, description={grammar}]{insubsubsecttwo}
+
+SUBSUBSECT2: \cref{subsubsect-two} (\getCurrentSectionNumber)
+
+
+\subsection{Subsection 1.2}\label{subsect-two}
+
+SECT2: \cref{subsect-two}
+
+\erratumAdd[id={testid}, description={grammar}]{insubsect2}
+
+
+
+\paragraph*{Paragraph 2}\label{par-two}
+
+\erratumAdd[inlinemark=false]{noinline}
+
+
+\erratumAdd[inlinemark=false]{noinline}
+
+\section{Section 2}\label{sect-two}
+
+\subsection{Subsection 2.1}\label{subsect-two-one}
+
+\chapter{Chapter2}\label{chap-two}
+
+
+HELLO \erratumAdd{In chap2 par1.}
+
+PAR1: \cref{chap-two}  (\getCurrentSectionNumber)
+
+\erratumAdd{in chap two}
+
+PAR ONE: \cref{par-one}
+
+SECT1: \cref{subsect-one}
+
+
+\section{Section 2.1}\label{sect-two-one}
+
+
+
+SECT2.1: \cref{sect-two-one}  (\getCurrentSectionNumber)
+
+\erratumAdd[inlinemark=true]{inlinemark}
+
+\begin{inlinelist}
+  \item{} has the \erratumDelete[type={grammar}]{marg} same behavior, and
+
+  \item{} when the competing traffic does not care about per-packet latency.
+\end{inlinelist}
+
+
+Here we have removed \erratumDelete[id={testid}, type={Deletion}]{removed} a word.
+
+
+
+
+\erratumAdd{In this experiment, they are limited to bundle one previous segment.}
+
+
+\begin{erratum}[date=2006-07-19,reported-by=Michael Kohlhase,margin=true,
+marginargs={colframe=blue!50!white}]{old should be new}
+this is a test of a long erratum
+\begin{enumerate}
+  \item We can replace \eReplace{oldtext}{newtext}
+  \item and \eAdd{new text}
+  \item and finally delete old text\eDelete{alltogether}
+  \end{enumerate}
+\end{erratum}
+
+\subsection{Subsection Margin test}\label{subsect-margin}
+
+\erratatest{}{Add test \erratumAdd{added} sentence test.}
+\erratatest{}{Add test \erratumAdd[label={customlabel1}]{added} sentence test.}
+\erratatest{inlinemark=false}{Add test \erratumAdd[inlinemark=false]{added} sentence test.}
+\erratatest{marginargs={size=fbox}}{Add test \erratumAdd[marginargs={size=fbox,colframe=green}]{added} sentence test.}
+
+customlabel: \Cref{customlabel1}
+
+\erratatest{}{INNER MODE TEST}
+
+ERRAT40: \cref{errata40}
+
+\begin{gather}\label{gatherlabel}
+  a=a  \\
+  b=b \erratumAdd[uselabel=gatherlabel,record=true,foot=true,margin=true]{1}
+\end{gather}
+%  b=b \erratumAdd[uselabel=gatherlabel]{\text{1}}
+%  b=b \erratumAdd[uselabel=gatherlabel]{\text{$1$}}
+REF(gatherlabel): \ref{gatherlabel}
+
+
+\begin{equation}\label{equationlabel}
+\begin{split}
+  a=a  \\
+  b=b \erratumAdd[uselabel=equationlabel,record=false,foot=true,margin=true]{equation test}
+\end{split}
+\end{equation}
+%  b=b \erratumAdd[uselabel=equationlabel]{\text{Spaces here should be preserved}}
+REF(equationlabel): \ref{equationlabel}
+
+
+\erratumAdd[uselabel=equationlabel]{\text{Spaces here should be preserved}}
+
+\subsection{Subsection Space tests}\label{subsect-space}
+
+\subsubsection{erratumAdd space test}
+
+\erratatest{inlinemark=false}{Add test \erratumAdd{added} sentence test.}
+\erratatest{inlinemark=false}{Add test \erratumAdd[inlinemark=false]{added} sentence test.}
+\erratatest{inlinechange=false}{Add test \erratumAdd[inlinechange=false]{added} sentence test.}
+\erratatest{inlineboth=false}{Add test \erratumAdd[inlinechange=false, inlinemark=false]{added} sentence test.}
+\erratatest{}{Add test\erratumAdd{,} sentence test.}
+\erratatest{inlinemark=false}{Add test\erratumAdd[inlinemark=false]{,} sentence test.}
+
+
+\subsubsection{erratumReplace space test}
+
+\erratatest{inlinemark=false}{Replace test \erratumReplace{orig}{repl} sentence test.}
+\erratatest{inlinemark=false}{Replace test \erratumReplace[inlinemark=false]{orig}{repl} sentence test.}
+\erratatest{inlinechange=false}{Replace test \erratumReplace[inlinechange=false]{orig}{repl} sentence test.}
+\erratatest{inlineboth=false}{Replace test \erratumReplace[inlinechange=false, inlinemark=false]{orig}{repl} sentence test.}
+\erratatest{inlinechange=true}{Replace test \erratumReplace[inlinechange=true]{orig}{repl} sentence test.}
+
+\subsubsection{erratumDelete space test}
+
+\erratatest{inlinemark=false}{Delete test \erratumDelete[inlinemark=false]{deleted} sentence test.}
+\erratatest{inlinemark=false}{Delete test \erratumDelete{deleted} sentence test.}
+\erratatest{inlinechange=false}{Delete test \erratumDelete[inlinechange=false]{deleted} sentence test.}
+\erratatest{inlineboth=false}{Delete test \erratumDelete[inlinechange=false, inlinemark=false]{deleted} sentence test.}
+
+\subsubsection{erratumNote space test}
+
+\erratatest{inlinemark=false}{Note test \erratumNote[inlinemark=false]{note1} sentence test.}
+\erratatest{inlinemark=false}{Note test \erratumNote{note2} sentence test.}
+\erratatest{inlinechange=false}{Note test \erratumNote[inlinechange=false]{note3} sentence test.}
+\erratatest{inlineboth=false}{Note test \erratumNote[inlinechange=false, inlinemark=false]{note4} sentence test.}
+
+
+\chapter{Testing special environments}\label{chap-special-environments}
+
+
+\subsection{Equation}\label{subsect-Equation}
+
+\begin{examplecode}{codeandresult, title=Title}
+\begin{equation}\label{customlabel}
+\begin{split}
+  a=a  \\
+  b=b \erratumAdd[uselabel=customlabel]{custom label example}
+  [Space test]
+\end{split}
+\end{equation}
+\end{examplecode}
+%\docaption{Some short errata}
+
+\subsection{Tables}\label{subsect-Tables}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabularx}{\textwidth}{c|c|c}
+    \hline
+    Alpha     & Beta     & Gamma \erratumAdd[usemarginnote,record=false,margin=true,foot=true]{added} \erratumAdd[usemarginnote=20pt]{added2} \\
+    0         & 2        & 4         \\ \hline
+    1         & 3        & 5         \\ \hline
+  \end{tabularx}
+\end{table}
+%\immediate\typeout{Erratum AFTER TABULARX}%
+
+
+\subsection{Colorboxes}\label{subsect-Colorboxes}
+
+\begin{lstlisting}
+In this sentence\erratumAdd{.} we added a comma without an
+inline mark\erratumAdd[inlinemark=true]{..} and a comma with
+inline marking.
+\end{lstlisting}
+
+
+
+\begin{examplecode}{codeandresult,minted options={},title=Title}
+In this sentence\erratumAdd{,} we added a comma without an
+inline mark\erratumAdd[inlinemark=true]{,} and a comma with
+inline marking.
+\end{examplecode}
+
+
+
+\begin{examplecode}{latexcode, label={code:short-errata}}
+Here we have \erratumAdd{three} errata in one
+\erratumDelete{superfluous phrase}{darned} long \erratumReplace
+[description={translated}]{Zeile}{line}
+\end{examplecode}
+
+\chapter{Errata}\label{chap:errata}
+
+\PrintErrata
+
+\end{document}
+
+%%% Local Variables:
+%%% TeX-master: "erratatest"
+%%% End:
