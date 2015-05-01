@@ -6,9 +6,38 @@
 
 \usepackage{pgfkeys}
 \usepackage{caption}
+\usepackage{etoolbox}
+
+\usepackage{etextools}
 
 \setkeys{caption}{debug=0}
 \PassOptionsToPackage{log-declarations=false}{xparse}
+
+\makeatletter
+\newcommand\IfPackageLoaded[3]{\@ifpackageloaded{#1}{#2}{#3}}%
+\makeatother
+
+\usepackage{lineno}
+
+\IfPackageLoaded{lineno}{
+\makeatletter
+% \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
+%\patchcmd{\@startsection}{\@ifstar}{\nolinenumbers\@ifstar}{}{}
+%\patchcmd{\@xsect}{\ignorespaces}{\linenumbers\ignorespaces}{}{}
+\makeatother
+\setpagewiselinenumbers
+\linenumbers
+\modulolinenumbers[100]
+}{
+\newif\ifLineNumbers \LineNumbersfalse %
+\def\nolinenumbers{}
+\def\linenumbers{}
+\def\linenumbers{}
+\def\setpagewiselinenumbers{}
+\def\linelabel#1{}
+\def\lineref#1{}
+\def\modulolinenumbers#1{}
+}
 
 \usepackage[bookmarks,breaklinks,pdfpagelabels,
 colorlinks=true,  % Colors links instead of ugly boxes
@@ -36,25 +65,34 @@ nameinlink
 \usepackage{tabularx}
 \usepackage[strings]{underscore} % Allow underscores in strings and filenames
 
-\tracingstats=2
+\usepackage[inline]{enumitem}
+\newlist{inlinelist}{enumerate*}{1}
+\setlist*[inlinelist]{%
+  label*=\textit{\alph*)},
+}
+
 
 \usepackage[
 %show=true,
 margins=true,
 foots=true,
 record=true,
+linenos=true,
 %cleveref=false,
 %hyperref=true,
-defaultargs={margin=true},
+defaultargs={margin=true,foot=false},
 %defaultargsadd={margin=false},
 %defaultargsdelete={margin=false},
 requirecmddescription=false,
 %marginnote=false,
-uniquelistlabels=1,
+uniquelistlabels=0,
 %inlinechanges=false,
-environmenttestmode=1,
+environmenttestmode=2,
 inlinemarks=true,
-styles={default, detailed, tablelist},
+%styles={default, detailed, tablelist},
+%styles={detailed},
+styles={tablelist},
+%styles={default},
 ]{errata}[2015/04/16]
 
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
@@ -73,13 +111,6 @@ styles={default, detailed, tablelist},
 
 \setcounter{secnumdepth}{6}
 
-\usepackage[inline]{enumitem}
-\newlist{inlinelist}{enumerate*}{1}
-\setlist*[inlinelist]{%
-  label*=\textit{\alph*)},
-}
-
-
 \makeatletter
 \newcommand{\getCurrentSectionNumber}{%
   \ifnum\c@section=0 %
@@ -96,8 +127,23 @@ styles={default, detailed, tablelist},
   \fi
   \fi
 }
-\makeatother
 
+
+% Customize table to show line numbers
+\errataSetKeyFormat[#1]{listformats/erratalistbegin}{\makeatletter%
+  \begin{longtable}{ p{1cm} c c p{2cm} p{5cm} c c }%
+    & Title & Type & Reported by & Action Desc & Page & Line \\\hline%
+    }
+
+\errataSetKeyFormat[#1]{listformats/reported-by}{R: #1}
+\errataSetKeyFormat[#1]{listformats/lineref}{\lineref{#1}}
+
+\errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
+    +erratumnamedlink,\noexpand\errataamersand,+action,\noexpand\errataamersand,%
+    -reported-by,\noexpand\errataamersand,%
+    +actiondescription,\noexpand\errataamersand,+pageref,\noexpand\errataamersand,-lineref}%
+
+\makeatother
 
 \newlength{\namelen}
 \setlength\namelen{39mm}
@@ -106,23 +152,25 @@ styles={default, detailed, tablelist},
 \NewDocumentCommand{\erratatest}{ m m }
 {\noindent {\makebox[\namelen][l]{\textbf{#1}}}: #2\\}
 
-\begin{document}
 
+
+\begin{document}
 
 \chapter{Chapter 1}\label{chap-one}
 
 \immediate\typeout{Erratum BEGIN}%
 
 
-\erratumAdd[margin=false, foot=true, record=true, description={SKROT}]{In par1}
+\erratumAdd[margin=false, foot=true, description={SKROT}]{In par1}
 
-\erratumAdd[margin=false, foot=true, record=true, description={}]{In par1}
+\erratumAdd[margin=false, foot=true, description={add}]{In par1}
 
-%\footnotetext[1]{CREF: \cref{errata1} }%
 
 ERRAT1 CREF: \cref{errata1}
 
 ERRATA1 CPAGEREF: \cpageref{errata1}
+
+ERR1 LINE NUMBER: \lineref{erratalineno1}.
 
 
 Therefore, the'
@@ -134,8 +182,11 @@ Note test \erratumNote[marginargs={before,after,%
 ,colframe=blue!50!white}]{Changes to paragraph} space before?
 
 
+\cref{errata4} LINE NUMBER: \lineref{erratalineno4}.
 
-What's for? Its contents is delivered into the token list par1 \erratumAdd{added in par1}.
+What's for? Its contents is delivered into the token list par1 \erratumAdd[label={customlabel0}]{added in par1}.
+
+\cref{errata5} (\cref{customlabel0}) LINE NUMBER: \lineref{erratalineno5}.
 
 TeX is reading when it switches from vertical to horizontal mode. \erratumAdd{added in par2} This happens when TeX, in vertical mode, sees a horizontal command par2.
 
@@ -149,21 +200,27 @@ Sect1: \cref{sect-one}  (\getCurrentSectionNumber)
 
 Replace: Next' \erratumReplace{word}{WORD} 'has been replaced.
 
+\cref{errata9} LINE NUMBER: \lineref{erratalineno9}.
 
 
 %Hyperlink: '\hyperlink{firstreplace}{LINK}'
 
+%\nolinenumbers
+Add: A word has been' \erratumAdd[margin=true,record=true]{added} 'here.
+%\footnote{TEST}
 
-Add: A word has been' \erratumAdd{added} 'here.
-
+%\linenumbers
 
 Delete: A word has been' \erratumDelete{removed} 'removed here, and here' \erratumDelete{removed}'.
 
 \erratumAdd[type={refining}, description={Added listing}]{chap-one}
-%\erratumAdd[type={refining}, description={Added listing}, margin=true,foot=true,record=true,inlinechange=true,inlinemark=true]{CREF INSIDE \cref{chap-one}}
+%\erratumAdd[type={refining}, description={Added listing}, margin=true,foot=true,inlinechange=true,inlinemark=true]{CREF INSIDE \cref{chap-one}}
+
 
 
 \erratumNote{Changes to paragraph} \erratumNote{Changes to paragraph}
+
+TEST \linelabel{linetestone} TWO \linelabel{linetesttwo} LINELABELS \lineref{linetestone}, \lineref{linetesttwo} \pageref{linetesttwo}
 
 
 \paragraph{TEST paragrah:}
@@ -276,8 +333,7 @@ SECT2.1: \cref{sect-two-one}  (\getCurrentSectionNumber)
 
 Here we have removed \erratumDelete[id={testid}, type={Deletion}]{removed} a word.
 
-
-
+ERRATA35 pref: \pageref{erratalineno35}, lineref: \lineref{erratalineno35}
 
 \erratumAdd{In this experiment, they are limited to bundle one previous segment.}
 
@@ -307,7 +363,7 @@ ERRAT40: \cref{errata40}
 
 \begin{gather}\label{gatherlabel}
   a=a  \\
-  b=b \erratumAdd[uselabel=gatherlabel,record=true,foot=true,margin=true]{1}
+  b=b \erratumAdd[uselabel=gatherlabel,foot=true,margin=true]{1}
 \end{gather}
 %  b=b \erratumAdd[uselabel=gatherlabel]{\text{1}}
 %  b=b \erratumAdd[uselabel=gatherlabel]{\text{$1$}}
@@ -317,7 +373,7 @@ REF(gatherlabel): \ref{gatherlabel}
 \begin{equation}\label{equationlabel}
 \begin{split}
   a=a  \\
-  b=b \erratumAdd[uselabel=equationlabel,record=false,foot=true,margin=true]{equation test}
+  b=b \erratumAdd[uselabel=equationlabel,foot=true,margin=true]{equation test}
 \end{split}
 \end{equation}
 %  b=b \erratumAdd[uselabel=equationlabel]{\text{Spaces here should be preserved}}
@@ -356,7 +412,9 @@ REF(equationlabel): \ref{equationlabel}
 \subsubsection{erratumNote space test}
 
 \erratatest{inlinemark=false}{Note test \erratumNote[inlinemark=false]{note1} sentence test.}
+
 \erratatest{inlinemark=false}{Note test \erratumNote{note2} sentence test.}
+
 \erratatest{inlinechange=false}{Note test \erratumNote[inlinechange=false]{note3} sentence test.}
 \erratatest{inlineboth=false}{Note test \erratumNote[inlinechange=false, inlinemark=false]{note4} sentence test.}
 
@@ -383,7 +441,7 @@ REF(equationlabel): \ref{equationlabel}
   \centering
   \begin{tabularx}{\textwidth}{c|c|c}
     \hline
-    Alpha     & Beta     & Gamma \erratumAdd[usemarginnote,record=false,margin=true,foot=true]{added} \erratumAdd[usemarginnote=20pt]{added2} \\
+    Alpha     & Beta     & Gamma \erratumAdd[usemarginnote,margin=true,foot=true]{added} \erratumAdd[usemarginnote=20pt]{added2} \\
     0         & 2        & 4         \\ \hline
     1         & 3        & 5         \\ \hline
   \end{tabularx}

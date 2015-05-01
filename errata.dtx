@@ -48,7 +48,6 @@
 \usepackage[margin=1.4in,verbose=false]{geometry}
 \input{preamble}
 \input{erratadocutil}
-\usepackage[show]{ed}
 \usepackage[show]{errata}
 %\usepackage[colorlinks=true,linkcolor=black,linktocpage=true]{hyperref}
 \usepackage[fancyhdr,today,draft]{svninfo}
@@ -58,7 +57,6 @@
 \PageIndex
 \RecordChanges
 \floatstyle{boxed}
-\usepackage{filecontents}
 \usepackage{dox}
 \doxitem{PkgOption}{pkgoption}{package options}
 \doxitem[idxtype=opt.]{CmdOption}{cmdoption}{command options}
@@ -133,16 +131,21 @@
 %%
 \pgfkeysdefnargs{/handlers/.@StrFmt@setdefaultformat}{4}{%
   \xintFor ##9 in {#4} \do {%
-    \pgfkeys{{#1/##9/.setStrKeyFmt={#2}{{#3}}}}% The default formater
+    \@StrFmt@set{#1/##9/.setStrKeyFmt={#2}{{#3}}}% The default formater
   }}
 \pgfkeys{/handlers/.also/.code={\pgfkeysalso{#1}}}
-\pgfkeys{/handlers/.ealso/.code={\pgfqkeysalso{\pgfkeyscurrentpath}{.also/.expand once={#1}}}}
+\pgfkeys{/handlers/.ealso/.code={%
+    \pgfqkeysalso{\pgfkeyscurrentpath}{.also/.expand once={#1}}}}
 %%
 \def\@StrFmt@set{\pgfqkeys{/\@StrFmtOpt@family}}
 \DeclareExpandableDocumentCommand{\@StrFmt@setvalues}{ O{} m } {\@StrFmt@set{#1/.cd, #2}}
 \DeclareExpandableDocumentCommand{\@StrFmt@getvalue}{ m } {\pgfkeysvalueof{\@StrFmtOpt@family/#1}}
 \NewDocumentCommand{\SetDefaultKeylistFormat}{ O{#1} m m }{% format, group, keys
-  \@StrFmt@set{#2/.@StrFmt@setdefaultformat={\@StrFmtOpt@family/#2}{#1}{#1}{#3}}%
+  \@StrFmt@set{#2/.@StrFmt@setdefaultformat={#2}{#1}{#1}{#3}}%
+}
+\NewDocumentCommand{\StrFmtgetformattedef}{ m m m }{% key, args, macroname
+  \@StrFmt@setvalues[#1]{.@formatter/.expanded={#2}}%
+  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
 }
 \NewDocumentCommand{\StrFmtgetformattedee}{ m m m }{% key, args, macroname
   \@StrFmt@setvalues[#1]{.@formatter/.expand twice={#2}}%
@@ -172,7 +175,6 @@
 %% [4]: Keywords (as comma separated values)
 %% [5]: Text containing the keys that define this formatted text to produce
 \NewDocumentCommand{\@StrFmt@FormatKeywords}{ O{} m m m m }{% format group key, parent key, formatkey parent , keys/values, format-string
-\@StrFmt@set{cmdkeys/.ealso=#4}%
 \@StrFmt@set{formateroutputt={}}%
 %% Reset arg key values
 \xintFor ##1 in {#5} \do {%
@@ -195,8 +197,8 @@
       \pgfkeysgetvalue{/\@StrFmtOpt@family/#3/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}%
       %% Fetch the value for the key
       %% If the key is prefixed with \@StrFmtOpt@notemptyprefix, and the value is empty, it's ignored
-      \ifboolexpr{ not test{\IfBeginWith{#1}{\@StrFmtOpt@notemptyprefix}}
-        and not test{\ifthenelse{\equal{\@StrFmt@tmpvalue}{}}}}{%
+      \ifboolexpr{ test{\IfBeginWith{##9}{\@StrFmtOpt@evenemptyprefix}}
+        or not test{\ifthenelse{\equal{\@StrFmt@tmpvalue}{}}}} {%
         \StrFmtgetformattede{#2/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}{\@StrFmt@tmp@fmtvalue}%
         \@StrFmt@set{formateroutputt/.append/.expand once={\@StrFmt@tmp@fmtvalue}}%
       }{}%
@@ -278,7 +280,7 @@ crefname={example}{examples},
 %
 \lstnewenvironment{savecodeexample}[2][]{%
   \lstset{#1}%
-  %\immediate\typeout{HELLO: savecodeexample}%
+  %\immediate\typeout{Errata: savecodeexample}%
   % The content is stored in a temp box to avoid any spaces etc.
   % to have an impact
   \setbox\@tempboxa\hbox\bgroup
@@ -472,6 +474,11 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %   the \refAux{marginnote} package will be used to handle margin notes when necessary.
 % \end{docKey}
 %
+% \begin{docKey}{linenos}{=\meta{true/false}}{boolean, initially \colOpt{false}}
+%   This experimental package option utlizes the \refAux{lineno} package to get the
+%   linenumber on the page where the erraum was registered.
+% \end{docKey}
+%
 % \begin{docKey}{styles}{=\meta{style name}}{string, initially default}
 %   The default styling of the errata markup in the errata list and the footnotes is very
 %   simple. This package option can be used to specify one or more predefined styles.
@@ -608,6 +615,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 % \end{savecodeexample}
 %
 % \examplecodeinput{example-erratum-env.tex}{latexcode, label={code:extended-erratum}}
+%
 % \docaption{An extended erratum with local correction markers}
 %
 % The text in \cref{code:extended-erratum} would be rendered as
@@ -1017,6 +1025,13 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \DeclareBoolOption[true]{marginnote}
 %    \end{macrocode}
 %\end{pkgoption}
+% \changes{v1.0}{2015/05/01}{linenos package option added}
+%\begin{pkgoption}{linenos}
+% The |linenos| package option
+%    \begin{macrocode}
+\DeclareBoolOption[false]{linenos}
+%    \end{macrocode}
+%\end{pkgoption}
 % \changes{v1.0}{2015/04/12}{environmenttestmode package option added}
 %\begin{pkgoption}{environmenttestmode}
 % The |environmenttestmode| package option allows to set when |\marginnnote| is used
@@ -1102,6 +1117,13 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \ProcessKeyvalOptions{Errata}
 %% Utility macros
 \input{erratapgfkeysextra}
+\NewDocumentCommand{\@errata@requirepackage}{ m }{%
+  \@ifpackageloaded{#1}{}{
+    \PackageWarning{errata}{The current errata settings require the #1 package to be loaded.
+      Loading package #1...}
+    \RequirePackage{#1}
+  }
+}
 \def\errataset{\pgfqkeys{/@errata@}}
 \DeclareExpandableDocumentCommand{\@errata@setvalue}{ m } {\pgfkeys{/@errata@/#1}}
 \DeclareExpandableDocumentCommand{\@errata@setvalues}{ O{} m } {\pgfkeys{/@errata@/#1.cd, #2}}
@@ -1118,8 +1140,8 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %    \begin{macrocode}
 \pgfkeys{
   /@errata@/cmdkeys/.is family, /@errata@/cmdkeys,
-  defaultargs/.style={record=true, foot=true, margin=true,
-    marginargs={}, inlinemark=true, inlinechange=true},
+  defaultargs/.style={record=true, foot=true, margin=true, marginargs={},
+    lineno=true, inlinemark=true, inlinechange=true},
   defaultargsadd/.style={},
   defaultargsreplace/.style={},
   defaultargsdelete/.style={},
@@ -1132,6 +1154,12 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \@errata@setvalues[cmdkeys/]{defaultargsreplace/.append style/.expand once={\@errataOpt@defaultargsreplace}}
 \@errata@setvalues[cmdkeys/]{defaultargsdelete/.append style/.expand once={\@errataOpt@defaultargsdelete}}
 \@errata@setvalues[cmdkeys/]{defaultargsnote/.append style/.expand once={\@errataOpt@defaultargsnote}}
+%%
+\AtBeginDocument{%
+  \ifboolexpr{ bool{@errataOpt@linenos} and not test{\@ifpackageloaded{lineno}} } {%
+    \@errata@requirepackage{lineno}
+  }{}
+}
 %%
 \if@errataOpt@show
 \@errataOpt@marginstrue%
@@ -1185,11 +1213,12 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \NewDocumentCommand{\errataSetListFormat}{ m }{%
   \@errata@declareStoreKey[#1]{listformat}%
 }
-\@errata@declareStoreKey[type, description, location, date, id, pageref,
-inlinemark, inlinechange, uselabel, label, margin, foot, record,
+\@errata@declareStoreKey[type, description, location, date, id, pageref, lineref,
+inlinemark, inlinechange, uselabel, label, margin, foot, record, lineno,
 marginargs, usemarginnote, reported-by, actionid, action, actionargs, actiondescription,
-erratumlistitem, erratumlistitemtitle, erratumlisttarget, onnewgroup, onsamegroup,
-erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@errata@formatkeys
+erratumlistitem, erratumlistitemtitle, erratumlisttarget,
+listbeforenewgroup, listafternewgroup, listbeforesamegroup, listaftersamegroup,
+erratumlabel, erratumname, erratumnamedlink, customvalue]{formatkeys}% Defines \@errata@formatkeys
 %%
 \@errata@setcmdkeys{\@errata@formatkeys}
 \@errata@setvalue{cmdkeys/usemarginnote/.default={0pt}}
@@ -1210,10 +1239,17 @@ erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@e
 \DeclareExpandableDocumentCommand{\@errata@getformattede}{ m m m }{% key, args, macroname
   \StrFmtgetformattede{#1}{#2}{#3}%
 }
+\DeclareExpandableDocumentCommand{\@errata@getformattedee}{ m m m }{% key, args, macroname
+  \StrFmtgetformattedee{#1}{#2}{#3}%
+}
+\DeclareExpandableDocumentCommand{\@errata@getformattedef}{ m m m }{% key, args, macroname
+  \StrFmtgetformattedef{#1}{#2}{#3}%
+}
 %% Set default formater for all keys
 \SetDefaultKeylistFormat[#1]{listformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{footformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{errformats}{errfmt, eerrbeginfmt, eerrendfmt}
+\SetDefaultKeylistFormat[#1]{actionformat}{add, delete, replace, note}
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{#2}%
 %%
 \@errata@declareKey[{@errata@erratum}]{footnoteprefix}
@@ -1246,6 +1282,34 @@ erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@e
 % \begin{savecodeexample}{style-default-formats.tex}
 %    \begin{macrocode}
 %%
+\NewDocumentCommand{\erratalistitem}{ m }{\item[#1]}
+\errataset{%
+  styles/basekeyformats/.style={%
+    actionidformat/add/.setStrKeyFmt={##1}{Addition},
+    actionidformat/delete/.setStrKeyFmt={##1}{Deletion},
+    actionidformat/note/.setStrKeyFmt={##1}{Note},
+    actionidformat/replace/.setStrKeyFmt={##1}{Correction},
+    %%
+    listformats/listbeforenewgroup/.setStrKeyFmt={##1}{},
+    listformats/listafternewgroup/.setStrKeyFmt={##1}{},
+    listformats/listbeforesamegroup/.setStrKeyFmt={##1}{},
+    listformats/listaftersamegroup/.setStrKeyFmt={##1}{},
+    %% The name of the errata labels
+    errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
+    errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
+    errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
+    %%
+    listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
+    listformats/erratumlistitem/.setStrKeyFmt={##1}{\erratalistitem{##1}},
+    listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
+    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
+      \@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}%
+    },
+    %%
+    listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter\begin{description}},
+      listformats/erratalistend/.setStrKeyFmt={##1}{\end{description}\makeatother},
+  },
+}
 \errataset{%
   defaultkeyformats/.style={%
     %% Formats for the footnotes
@@ -1256,37 +1320,15 @@ erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@e
     actionformat/add/.setStrKeyFmt={##1}{ (added text)},
     actionformat/delete/.setStrKeyFmt={##1}{(deleted ``##1'')},
     actionformat/replace/.setStrKeyFmt={##1+##2}{ (original text was: ``##2'')},
-    actionformat/note/.setStrKeyFmt={##1}{##1},
     %% Errata list format
     listformats/description/.setStrKeyFmt={##1}{~##1},
-    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
-      \@errata@hlink{\@errata@getvalue{labelref}}%
-      {\protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}},
-    listformats/pageref/.setStrKeyFmt={##1}{Page~\pageref{##1} },
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
+      \@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}},
     listformats/type/.setStrKeyFmt={##1}{Type: ##1 },
     listformats/date/.setStrKeyFmt={##1}{ (Date reported: ##1)},
     listformats/reported-by/.setStrKeyFmt={##1}{Reported by: ##1},
     listformats/action/.setStrKeyFmt={##1}{~##1},
     listformats/actiondescription/.setStrKeyFmt={##1}{~##1},
-    listformats/erratumlistitem/.setStrKeyFmt={##1}{\item[##1]},
-    listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
-    listformats/erratumname/.setStrKeyFmt={##1}{##1},
-    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
-      {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}%
-    },
-    listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
-    %% The name of the errata labels
-    errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
-    errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
-    errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
-    %%
-    actionidformat/add/.setStrKeyFmt={##1}{Addition},
-    actionidformat/delete/.setStrKeyFmt={##1}{Deletion},
-    actionidformat/note/.setStrKeyFmt={##1}{Note},
-    actionidformat/replace/.setStrKeyFmt={##1}{Correction},
-    %%
-    listformats/onnewgroup/.setStrKeyFmt={##1}{},
-    listformats/onsamegroup/.setStrKeyFmt={##1}{},
   },
 %    \end{macrocode}
 % \end{savecodeexample}
@@ -1294,7 +1336,7 @@ erratumlabel, erratumname,erratumnamedlink,customvalue]{formatkeys}% Defines \@e
 % \input{style-default-formats.tex}
 %
 %    \begin{macrocode}
-defaultlistandfootstyle/.code={%
+  defaultlistandfootstyle/.code={%
 %    \end{macrocode}
 %
 % \begin{docTarget}{Default formatters}
@@ -1302,26 +1344,25 @@ defaultlistandfootstyle/.code={%
 % \end{docTarget}
 % \begin{savecodeexample}{default-erratalist-format.tex}
 %    \begin{macrocode}
-\errataSetListFormat{+erratumlistitem, +erratumlisttarget, +description}
+    \errataSetListFormat{+erratumlisttarget, +description}
 %    \end{macrocode}
 % \end{savecodeexample}
 % \input{default-erratalist-format.tex}
 %
 % \begin{savecodeexample}{default-footnote-format.tex}
 %    \begin{macrocode}
-\errataSetFootFormat{+description, +actiondescription}
+    \errataSetFootFormat{+description, +actiondescription}
 %    \end{macrocode}
 % \end{savecodeexample}
 % \input{default-footnote-format.tex}
 %    \begin{macrocode}
-},
-styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
+  },
+  styles/default/.style={styles/basekeyformats, defaultkeyformats, defaultlistandfootstyle},
 }
 %%
 %% END style: default
 %%
 %    \end{macrocode}
-%
 % \begin{docTarget}{Errata detailed style definition}
 %% Define the detailed formatting
 % \end{docTarget}
@@ -1331,11 +1372,14 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
   detailedstylekeyformats/.style={%
     %% Errata list format
     listformats/description/.setStrKeyFmt={##1}{~(##1)},
-    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
-      {\@errata@hlink{\@errata@getvalue{labelref}}{%
-          \protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}%
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
+      {\@errata@hlink{##1}{%
+          \protect\makebox[\@errata@groupindent][l]{##2}}%
         \@errata@hlinkerratum{\the@errata@erratum}{\@errata@erratumname}}},
+    listformats/action/.setStrKeyFmt={##1}{~##1},
     listformats/actiondescription/.setStrKeyFmt={##1}{\newline ##1},
+    listformats/pageref/.setStrKeyFmt={##1}{Page~\pageref{##1}},
+    listformats/lineref/.setStrKeyFmt={##1}{Line \lineref{##1}},
     %% Foot format
     footformats/description/.setStrKeyFmt={##1}{~(##1)},
     footformats/action/.setStrKeyFmt={##1}{~##1},
@@ -1357,7 +1401,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
             ]##2\end{tcolorbox}}}},%
   },
   detailedlistandfootstyle/.code={%
-    \errataSetListFormat{+erratumlistitem, +erratumlisttarget, +pageref, +action, +description, +date, +actiondescription}
+    \errataSetListFormat{+erratumlisttarget, +pageref, +action, -description, -date, +actiondescription}
     \errataSetFootFormat{+action, -description,:, +actiondescription}
   },
   detailedstylesetupcode/.code={%
@@ -1365,11 +1409,12 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
     \setlength\@errata@listindent{33mm}
     \setlength\@errata@groupindent{16mm}
     \setcounter{@errata@uniquelistlabels}{3}
-    \@ifpackageloaded{tcolorbox}{}{%
-      \RequirePackage[most]{tcolorbox}
-    }
-    \AtBeginEnvironment{errata} {
-      \setlist[description]{labelindent=0pt,labelwidth=\@errata@listindent,leftmargin=!}%
+    \AtBeginDocument{%
+      \@errata@requirepackage{tcolorbox}
+      \@errata@requirepackage{enumitem}
+      \AtBeginEnvironment{errata} {
+        \setlist[description]{labelindent=0pt,labelwidth=\@errata@listindent,leftmargin=!}%
+      }
     }
   },
   styles/detailed/.style={detailedstylekeyformats, detailedlistandfootstyle,
@@ -1385,7 +1430,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %    \begin{macrocode}
 %%
 \NewDocumentCommand{\errataamersand}{}{&}
-\NewDocumentCommand{\erratacustomhline}{}{\\\hline }
+\NewDocumentCommand{\erratalistbeginnewgroup}{}{\\[4pt]\hline\rule[1ex]{0pt}{1em}}
 \NewDocumentCommand{\erratacustomendline}{}{\\}
 \errataset{%
   liststyletablekeyformats/.style={%
@@ -1398,29 +1443,31 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
     listformats/erratumlistitem/.setStrKeyFmt={##1}{},
     listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
       {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}},
-    listformats/onnewgroup/.setStrKeyFmt={##1}{\noexpand\erratacustomhline},
-    listformats/onsamegroup/.setStrKeyFmt={##1}{\noexpand\erratacustomendline},
+    %%
+    listformats/listbeforenewgroup/.setStrKeyFmt={##1}{\noexpand\erratalistbeginnewgroup},
+    listformats/listafternewgroup/.setStrKeyFmt={##1}{},
+    listformats/listbeforesamegroup/.setStrKeyFmt={##1}{\noexpand\erratacustomendline},
+    listformats/listaftersamegroup/.setStrKeyFmt={##1}{},
+    %%
     listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter%
-        \begin{longtable}{ c c c p{6cm} c }%
-           & Title & Type & Action Desc & Page \\\hline%
-          },
+      \begin{longtable}{ p{1.5cm} p{1cm} c p{5cm} c }%
+        & Title & Type & Action Desc & Page %
+        },
     listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
   },
-  renewerrataenvfortable/.code={%
+  requirelongtable/.code={%
     \AtBeginDocument{%
-      \renewenvironment{errata}{%
-        \@errata@getformatted{listformats/erratalistbegin}{}{\@errata@tmp@erratalistbegin}%
-        \@errata@tmp@erratalistbegin%
-      }{\@errata@getformatted{listformats/erratalistend}{}{\@errata@tmp@erratalistend}%
-        \@errata@tmp@erratalistend%
-      }}
+      \@errata@requirepackage{longtable}
+    }
   },
   liststylefortable/.code={
     \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
       +erratumnamedlink,\noexpand\errataamersand,+action,\noexpand\errataamersand,%
       +actiondescription,\noexpand\errataamersand,+pageref}%
+    \setcounter{@errata@uniquelistlabels}{4}
   },
-  styles/tablelist/.style={liststyletablekeyformats, renewerrataenvfortable, liststylefortable},
+  styles/tablelist/.style={liststyletablekeyformats, requirelongtable,
+    defaultlistandfootstyle, liststylefortable},
 }
 %%
 %% END style tablelist
@@ -1434,12 +1481,15 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %\fi
 %    \begin{macrocode}
 \input{erratastyles}
-\errataset{.errataapplystyles={\@errataOpt@styles}}
+\errataset{.errataapplystyles/.list={basekeyformats, \@errataOpt@styles}}
 %%
 \DeclareExpandableDocumentCommand{\@errata@htargetname}{ m } {errata#1}%
+\DeclareExpandableDocumentCommand{\@errata@linenoname}{ m } {\if@errataOpt@linenos%
+  erratalineno#1\else{}\fi}%
 \DeclareExpandableDocumentCommand{\@errata@htargetlisttname}{ m } {erratalist#1}%
 \NewDocumentCommand{\@errata@hlink}{ m m } {#2}%
-\NewDocumentCommand{\@errata@label}{ m } {\label{#1}}%
+\NewDocumentCommand{\@errata@label}{ m } {%
+  \protected@edef\@errata@expanded@arg{#1}\label{\@errata@expanded@arg}}%
 \NewDocumentCommand{\@errata@htargeterratum}{ O{} m m } {\@errata@label{#1}#2}
 \NewDocumentCommand{\@errata@hlinkerratum}{ m m } {\@errata@hlink{\@errata@htargetname{#1}}{#2}}
 \NewDocumentCommand{\@errata@hlinkerratumlist}{ m m } {\@errata@hlink{\@errata@htargetlisttname{#1}}{#2}}
@@ -1452,17 +1502,26 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %%
 %% \@errata@htargeterratum
 %% ARG1: Optional argument to indicate whether to add labels,
-%% ARG2: The target name of the primary label/hyperlink
-%% ARG3: The target name of the optional custom label
+%% ARG2: The (optional) target name of a custom label
+%% ARG3: The target name of the primary label/hyperlink
 %% ARG4: The text to insert after the label/hypertarget
 %% Hypertarget creates a hyper-link anchor, used to link to this location with \hyperlink
 %% The label is needed for such as ref/pageref/cref
-\RenewDocumentCommand{\@errata@htargeterratum}{ O{} O{} m m }%
-{\Hy@raisedlink{\hypertarget{#3}{}}%
-\@errata@isempty{#1}{% Add labels
-\@errata@label{#3}% Primary label
-\@errata@isnotempty{#2}{\@errata@label{#2}}% Seconday custom label
-}{#4}}%
+\RenewDocumentCommand{\@errata@htargeterratum}{ O{} O{} m m }{%
+  \Hy@raisedlink{\hypertarget{#3}{}}%
+  \@errata@isempty{#1}{% Add labels
+    \@errata@label{#3}% Primary label
+    \if@errataOpt@linenos%
+    \ifboolexpr{ test {\ifdolineno} }{%
+      \ifinner\else%
+      \edef\@errata@expanded@arg{\@errata@linenoname{\the@errata@erratum}}%
+      \expandafter\linelabel\expandafter{\@errata@expanded@arg}%
+      \fi%
+    }{}%
+    \fi%
+    \@errata@isnotempty{#2}{\@errata@label{#2}}% Seconday custom label
+  }{#4}%
+}%
 \fi
 %%
 
@@ -1530,13 +1589,11 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 % \begin{macro}{\erratumItem}
 % Macro for adding an item to the errata list
 %    \begin{macrocode}
-%% ARG1: Optional value to add to the end
-%% ARG2: Item title
-%% ARG2: errata-format-text
-\DeclareDocumentCommand{\erratumItem}{ O{} m m } {%
-\@errata@getformatted{listformats/erratumlistitem}{#2}{\@errata@tmplistitem}%
-\@errata@tmplistitem#3#1%
-}
+%% ARG1: Optional value to add before the content
+%% ARG2: Optional value to add after the content
+%% ARG3: Item title
+%% ARG4: errata-format-text
+\DeclareDocumentCommand{\erratumItem}{ O{} O{} m m } {#1#3#4#2}
 %%
 %    \end{macrocode}
 % \end{macro}
@@ -1563,18 +1620,41 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 % \end{macro}
 %    \begin{macrocode}
 %%
-\newcommand\ifdomargin[0]{
-  \ifboolexpr{ bool{@errataOpt@margins} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/margin}}{true}}}}}
-\newcommand\ifdofoot[0]{
-  \ifboolexpr{ bool{@errataOpt@foots} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/foot}}{true}}}}}
-\newcommand\ifdorecord[0]{
-  \ifboolexpr{ bool{@errataOpt@record} and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/record}}{true}}}}}
-\newenvironment{errata}{\makeatletter%
-\begin{description}}{\end{description}%
-\makeatother
+\newcommand\ifdomargin[0]{%
+  \ifboolexpr{
+    bool{@errataOpt@margins}
+    and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/margin}}{true}}}}}
+\newcommand\ifdofoot[0]{%
+  \ifboolexpr{
+    bool{@errataOpt@foots}
+    and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/foot}}{true}}}}}
+\newcommand\ifdorecord[0]{%
+  \ifboolexpr{
+    bool{@errataOpt@record}
+    and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/record}}{true}}}}}
+%%
+%% Ideally, the \ifdolineno test would include a test for bool{@errataOpt@linenos}
+%% However, LineNumbers isn't available if the lineno package isn't loaded,
+%% and as ifboolexpr doesn't do lazy evaluation, we can't test for that
+%% unless we know the package is loaded.
+\newcommand\ifdolineno[0]{%
+  \ifboolexpr{
+    and test{\ifthenelse{\equal{\@errata@getvalue{cmdkeys/lineno}}{true}}}
+    and bool{LineNumbers} }}
+%%
+%    \end{macrocode}
+% \begin{environment}{errata}
+% The errata environment used for the errata list
+%    \begin{macrocode}
+\newenvironment{errata}{%
+  \@errata@getformatted{listformats/erratalistbegin}{}{\@errata@tmp@erratalistbegin}%
+  \@errata@tmp@erratalistbegin%
+}{\@errata@getformatted{listformats/erratalistend}{}{\@errata@tmp@erratalistend}%
+  \@errata@tmp@erratalistend%
 }
 %%
 %    \end{macrocode}
+% \end{environment}
 % \begin{environment}{erratum}
 % The erratum environment used for creating an extended errata.
 %    \begin{macrocode}
@@ -1589,7 +1669,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 {\@errata@getformatted{errformats/eerrbeginfmt}{\@errata@hlinkerratumlist{\the@errata@erratum}{\arabic{@errata@erratum}}}{\@errata@tmpfmtvalue}%
 \@errata@marginnote[\@errata@tmp@marginargs]{\@errata@tmpfmtvalue}%
 }{}%
-\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\@errata@dorecord{listformats}{\@errata@listformat}{\@errata@argsstring}%
 \def\eAdd##1{[##1]$_a$}%
 \def\eDelete##1{\erratum@mark[]$_d^{\@thefnmark}$\if@errataOpt@foots\@footnotetext{deleted: ##1}\fi}%
 \def\eReplace##1##2{\erratum@mark[##2]$_r^{\@thefnmark}$\if@errataOpt@foots\@footnotetext{was: ##1}\fi}
@@ -1620,16 +1700,19 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %%
 % \begin{macro}{\@errata@dorecord}
 %    \begin{macrocode}
-\NewDocumentCommand{\@errata@dorecord}{ O{} m m m } {% formattype, listformat, argsstring
+\NewDocumentCommand{\@errata@dorecord}{ m m m } {% formattype, listformat, argsstring
 \ifboolexpr{ test {\ifdorecord} }{%
 %% Get the formatted code for a new group
-  \ifboolexpr{ not test {\ifthenelse{\equal{\@errata@getvalue{cmdkeys/onnewgroup}}{}}} }%
+  \ifboolexpr{ not test {\ifthenelse{\equal{\@errata@labelname}{}}} }%
   {%
-    \@errata@getformatted{listformats/onnewgroup}{\@errata@labelname}{\@errata@tmp@ongroup}%
+    \@errata@getformatted{listformats/listbeforenewgroup}{\@errata@labelname}{\@errata@tmp@before}%
+    \@errata@getformatted{listformats/listafternewgroup}{\@errata@labelname}{\@errata@tmp@after}%
   }%
-  {\@errata@getformatted{listformats/onsamegroup}{\@errata@labelname}{\@errata@tmp@ongroup}}%
-\@errata@FormatKeywords[errata@formatted@output]{#2}{#4}{#3}%
-\@errata@record[\@errata@tmp@ongroup]{\expandonce{\errata@formatted@output}}%
+  {%
+    \@errata@getformatted{listformats/listbeforesamegroup}{\@errata@labelname}{\@errata@tmp@before}%
+    \@errata@getformatted{listformats/listaftersamegroup}{\@errata@labelname}{\@errata@tmp@after}%
+  }%
+  \@errata@record[\@errata@tmp@before][\@errata@tmp@after]{\noexpand\@errata@FormatKeywords{#1}{#3}{#2}}%
 }{}%
 }
 %    \end{macrocode}
@@ -1637,12 +1720,13 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 % \begin{macro}{\@errata@record}
 %% Create an entry in the errata list produced by PrintErrata
 %    \begin{macrocode}
-\NewDocumentCommand{\@errata@record}{ O{} m } {% erratakeyvalues
+\NewDocumentCommand{\@errata@record}{ O{} O{} m } {% erratakeyvalues
 \@errata@getformatted{errformats/errfmt}{\arabic{@errata@erratum}}{\@errata@erratumname}%
 \@errata@setvalue{cmdkeys/erratumlistitemtitle/.get=\@errata@tmp@itemtitle}%
-\@errata@getformattede{listformats/erratumlistitemtitle}{\@errata@tmp@itemtitle}{\@errata@tmp@formatteditemtitle}%
+\@errata@getformattedef{listformats/erratumlistitemtitle}{\@errata@tmp@itemtitle}{\@errata@tmp@formatteditemtitle}%
+\@errata@getformatted{listformats/erratumlistitem}{\@errata@tmp@formatteditemtitle}{\@errata@tmplistitem}%
 \protected@write\@errata@file{}%
-{\string\erratumItem[#1]{\@errata@tmp@formatteditemtitle}{#2}}%
+{\string\erratumItem[#1][#2]{\@errata@tmplistitem}{#3}}%
 }
 %    \end{macrocode}
 % \end{macro}
@@ -1733,7 +1817,8 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 \ifmmode% In math mode, we can't add a label
 \eappto\@errata@tmp@dolabel{nolabel}%
 \fi%
-\@errata@htargeterratum[\@errata@tmp@dolabel][\@errata@getvalue{cmdkeys/label}]{\@errata@htargetname{\the@errata@erratum}}{\@errata@getvalue{inlinevalue}}%
+\@errata@htargeterratum[\@errata@tmp@dolabel][\@errata@getvalue{cmdkeys/label}]%
+{\@errata@htargetname{\the@errata@erratum}}{\@errata@getvalue{inlinevalue}}%
 %%
 \ifboolexpr{test {\ifdofoot} }{%
   \protected@edef\@errata@tmp@footprefix{\arabic{\@errata@getvalue{footnoteprefix}}}% Expand the formatting code here, and not inside the footnote macro
@@ -1759,6 +1844,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 \@errata@setvalue{cmdkeys/uselabel={\@errata@htargetname{\the@errata@erratum}}}%
 \@errata@getformatted{errformats/errfmt}{\arabic{@errata@erratum}}{\@errata@erratumname}%
 \@errata@setvalue{cmdkeys/erratumname/.expand once=\@errata@erratumname}%
+\@errata@setvalue{cmdkeys/lineref={\@errata@linenoname{\the@errata@erratum}}}%
 %%
 \@errata@setvalues[cmdkeys/]{#2, #3}%
 \@errata@setvalues{cmdkeys/actionid/.get=\@errata@tmp@actionid}%
@@ -1782,13 +1868,10 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
   \ifnumcomp{\value{@errata@uniquelistlabels}}{>}{0}%
   {% True
     \ifthenelse{\expandafter\equal{\@errata@lastuniquelabel}{\@errata@labelname}}%
-    {\@errata@setvalue{labelname={}}% Hide the label, if it equals the previous label
-      \@errata@setvalue{cmdkeys/onnewgroup={}}%
-    }%
+    {\@errata@setvalue{labelname={}}}% Hide the label, if it equals the previous label
     {\@errata@setvalue{prevlabel/.expanded=\@errata@labelname}%
-      \@errata@setvalue{cmdkeys/onnewgroup/.expanded=\@errata@labelname}%
+      \@errata@setvalue{lastuniquelabel/.expanded=\@errata@labelname}%
     }%
-    \@errata@setvalue{lastuniquelabel/.expanded=\@errata@labelname}%
   }{\@errata@setvalue{prevlabel=\@errata@labelname}}%
 }{}%
 %%
@@ -1802,6 +1885,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 \@errata@isnotempty{\@errata@getvalue{cmdkeys/uselabel}}{%
   \protected@eappto\@errata@argsstring{, pageref={\@errata@getvalue{cmdkeys/uselabel}}}%
 }%
+\protected@eappto\@errata@argsstring{, lineref={\@errata@getvalue{cmdkeys/lineref}}}%
 \protected@eappto\@errata@argsstring{, erratumlistitemtitle={\@errata@getvalue{cmdkeys/erratumlistitemtitle}}}%
 \protected@eappto\@errata@argsstring{, erratumnamedlink={\@errata@getvalue{cmdkeys/erratumnamedlink}}}%
 %% Set the link target for this errata in the errata list (erratalist<number>)
@@ -1845,7 +1929,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %% \@erratum@cmd must be within the group, as pgfkeys are group local
 \@erratum@cmd{defaultargsadd}{#1}{actionid={add}, actionargs={#2}}%
 \@errata@dolayoutonpage{a}{}{#2}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
-\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\@errata@dorecord{listformats}{\@errata@listformat}{\@errata@argsstring}%
 }%
 %% Handle if the space after the macro call should be ignored
 \@erratum@handleprevisspace%
@@ -1864,7 +1948,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %% \@erratum@cmd must be within the group, as pgfkeys are group local
 \@erratum@cmd{defaultargsreplace}{#1}{actionid={replace}, actionargs={#3+#2}}%
 \@errata@dolayoutonpage{r}{#2}{#3}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
-\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\@errata@dorecord{listformats}{\@errata@listformat}{\@errata@argsstring}%
 }%
 %% Handle if the space after the macro call should be ignored
 \@erratum@handleprevisspace%
@@ -1882,7 +1966,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %% \@erratum@cmd must be within the group, as pgfkeys are group local
 \@erratum@cmd{defaultargsdelete}{#1}{actionid={delete}, actionargs={#2}}%
 \@errata@dolayoutonpage{d}{#2}{}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
-\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\@errata@dorecord{listformats}{\@errata@listformat}{\@errata@argsstring}%
 }%
 \@erratum@handleprevisspace%
 }
@@ -1899,7 +1983,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %% \@erratum@cmd must be within the group, as pgfkeys are group local
 \@erratum@cmd{defaultargsnote}{#1}{actionid={note}, actionargs={#2}}%
 \@errata@dolayoutonpage{n}{}{#2}{\@errata@FormatKeywords{footformats}{\@errata@argsstring}{\@errata@footformat}}%
-\@errata@dorecord[\\]{listformats}{\@errata@listformat}{\@errata@argsstring}%
+\@errata@dorecord{listformats}{\@errata@listformat}{\@errata@argsstring}%
 }%
 %% Handle if the space after the macro call should be ignored
 \@erratum@handleprevisspace%

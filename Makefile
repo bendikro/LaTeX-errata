@@ -2,7 +2,7 @@ PREFIX = lib
 PACKAGE = errata
 DTX.sty.base = errata
 EXAMPLE.base = erratatest
-EXAMPLE.deps := strkeyformatter.sty
+EXAMPLE.deps := strkeyformatter.sty /usr/share/texlive/texmf-dist/tex/latex/lineno/lineno.sty
 
 BUILD_DIR = build
 
@@ -28,11 +28,8 @@ CLEAN_BUILD_EXT = log out fdb_latexmk synctex.gz
 
 CLEAN_EXT = $(CLEAN_FINAL_EXT) $(CLEAN_TMP_EXT) $(CLEAN_BUILD_EXT)
 
-CLEAN_BUILT=*out.pyg* *.sty *-errata.tex
+CLEAN_BUILT=*out.pyg* *.sty *-errata.tex erratastyles.tex erratapgfkeysextra.tex
 CLEAN_PREFIX=errata
-
-#clean:
-#	rm -f *~ *.log *.ilg *.out *.glo *.idx *.ilg *.blg
 
 #distclean: 	clean
 #	rm -f *.aux *.ind *.gls *.ps *.dvi *.toc *.xml *.omdoc *.thm
@@ -58,6 +55,9 @@ cleanman: setcleanman docleanext1 setcleanmanbuild docleanext2 docleantex
 cleantest: setcleantest docleanext3 setcleantestbuild docleanext4
 cleanall: cleanman cleantest
 distclean: cleanall cleanbuilt
+
+#clean: setcleanman docleanext1
+
 
 setcleantboxtest:
 	$(eval CLEAN_PREFIX := tboxtest)

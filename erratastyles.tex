@@ -8,6 +8,34 @@
 %% 
 %% Define the default errata formatting
 %%
+\NewDocumentCommand{\erratalistitem}{ m }{\item[#1]}
+\errataset{%
+  styles/basekeyformats/.style={%
+    actionidformat/add/.setStrKeyFmt={##1}{Addition},
+    actionidformat/delete/.setStrKeyFmt={##1}{Deletion},
+    actionidformat/note/.setStrKeyFmt={##1}{Note},
+    actionidformat/replace/.setStrKeyFmt={##1}{Correction},
+    %%
+    listformats/listbeforenewgroup/.setStrKeyFmt={##1}{},
+    listformats/listafternewgroup/.setStrKeyFmt={##1}{},
+    listformats/listbeforesamegroup/.setStrKeyFmt={##1}{},
+    listformats/listaftersamegroup/.setStrKeyFmt={##1}{},
+    %% The name of the errata labels
+    errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
+    errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
+    errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
+    %%
+    listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
+    listformats/erratumlistitem/.setStrKeyFmt={##1}{\erratalistitem{##1}},
+    listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
+    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
+      \@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}%
+    },
+    %%
+    listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter\begin{description}},
+      listformats/erratalistend/.setStrKeyFmt={##1}{\end{description}\makeatother},
+  },
+}
 \errataset{%
   defaultkeyformats/.style={%
     %% Formats for the footnotes
@@ -18,44 +46,22 @@
     actionformat/add/.setStrKeyFmt={##1}{ (added text)},
     actionformat/delete/.setStrKeyFmt={##1}{(deleted ``##1'')},
     actionformat/replace/.setStrKeyFmt={##1+##2}{ (original text was: ``##2'')},
-    actionformat/note/.setStrKeyFmt={##1}{##1},
     %% Errata list format
     listformats/description/.setStrKeyFmt={##1}{~##1},
-    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
-      \@errata@hlink{\@errata@getvalue{labelref}}%
-      {\protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}},
-    listformats/pageref/.setStrKeyFmt={##1}{Page~\pageref{##1} },
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
+      \@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}},
     listformats/type/.setStrKeyFmt={##1}{Type: ##1 },
     listformats/date/.setStrKeyFmt={##1}{ (Date reported: ##1)},
     listformats/reported-by/.setStrKeyFmt={##1}{Reported by: ##1},
     listformats/action/.setStrKeyFmt={##1}{~##1},
     listformats/actiondescription/.setStrKeyFmt={##1}{~##1},
-    listformats/erratumlistitem/.setStrKeyFmt={##1}{\item[##1]},
-    listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
-    listformats/erratumname/.setStrKeyFmt={##1}{##1},
-    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
-      {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}%
-    },
-    listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
-    %% The name of the errata labels
-    errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
-    errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
-    errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
-    %%
-    actionidformat/add/.setStrKeyFmt={##1}{Addition},
-    actionidformat/delete/.setStrKeyFmt={##1}{Deletion},
-    actionidformat/note/.setStrKeyFmt={##1}{Note},
-    actionidformat/replace/.setStrKeyFmt={##1}{Correction},
-    %%
-    listformats/onnewgroup/.setStrKeyFmt={##1}{},
-    listformats/onsamegroup/.setStrKeyFmt={##1}{},
   },
-defaultlistandfootstyle/.code={%
+  defaultlistandfootstyle/.code={%
 %% Define the default format of the errata list and footnotes
-\errataSetListFormat{+erratumlistitem, +erratumlisttarget, +description}
-\errataSetFootFormat{+description, +actiondescription}
-},
-styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
+    \errataSetListFormat{+erratumlisttarget, +description}
+    \errataSetFootFormat{+description, +actiondescription}
+  },
+  styles/default/.style={styles/basekeyformats, defaultkeyformats, defaultlistandfootstyle},
 }
 %%
 %% END style: default
@@ -66,11 +72,14 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
   detailedstylekeyformats/.style={%
     %% Errata list format
     listformats/description/.setStrKeyFmt={##1}{~(##1)},
-    listformats/erratumlistitemtitle/.setStrKeyFmt={##1}{%
-      {\@errata@hlink{\@errata@getvalue{labelref}}{%
-          \protect\makebox[\@errata@groupindent][l]{\@errata@labelname}}%
+    listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
+      {\@errata@hlink{##1}{%
+          \protect\makebox[\@errata@groupindent][l]{##2}}%
         \@errata@hlinkerratum{\the@errata@erratum}{\@errata@erratumname}}},
+    listformats/action/.setStrKeyFmt={##1}{~##1},
     listformats/actiondescription/.setStrKeyFmt={##1}{\newline ##1},
+    listformats/pageref/.setStrKeyFmt={##1}{Page~\pageref{##1}},
+    listformats/lineref/.setStrKeyFmt={##1}{Line \lineref{##1}},
     %% Foot format
     footformats/description/.setStrKeyFmt={##1}{~(##1)},
     footformats/action/.setStrKeyFmt={##1}{~##1},
@@ -92,7 +101,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
             ]##2\end{tcolorbox}}}},%
   },
   detailedlistandfootstyle/.code={%
-    \errataSetListFormat{+erratumlistitem, +erratumlisttarget, +pageref, +action, +description, +date, +actiondescription}
+    \errataSetListFormat{+erratumlisttarget, +pageref, +action, -description, -date, +actiondescription}
     \errataSetFootFormat{+action, -description,:, +actiondescription}
   },
   detailedstylesetupcode/.code={%
@@ -100,11 +109,12 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
     \setlength\@errata@listindent{33mm}
     \setlength\@errata@groupindent{16mm}
     \setcounter{@errata@uniquelistlabels}{3}
-    \@ifpackageloaded{tcolorbox}{}{%
-      \RequirePackage[most]{tcolorbox}
-    }
-    \AtBeginEnvironment{errata} {
-      \setlist[description]{labelindent=0pt,labelwidth=\@errata@listindent,leftmargin=!}%
+    \AtBeginDocument{%
+      \@errata@requirepackage{tcolorbox}
+      \@errata@requirepackage{enumitem}
+      \AtBeginEnvironment{errata} {
+        \setlist[description]{labelindent=0pt,labelwidth=\@errata@listindent,leftmargin=!}%
+      }
     }
   },
   styles/detailed/.style={detailedstylekeyformats, detailedlistandfootstyle,
@@ -116,7 +126,7 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
 %% Define the tablelist style for formatting the errata list as a table
 %%
 \NewDocumentCommand{\errataamersand}{}{&}
-\NewDocumentCommand{\erratacustomhline}{}{\\\hline }
+\NewDocumentCommand{\erratalistbeginnewgroup}{}{\\[4pt]\hline\rule[1ex]{0pt}{1em}}
 \NewDocumentCommand{\erratacustomendline}{}{\\}
 \errataset{%
   liststyletablekeyformats/.style={%
@@ -129,29 +139,31 @@ styles/default/.style={defaultkeyformats, defaultlistandfootstyle},
     listformats/erratumlistitem/.setStrKeyFmt={##1}{},
     listformats/erratumlistitemtitle/.setStrKeyFmt={##1+##2}{%
       {\@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}}},
-    listformats/onnewgroup/.setStrKeyFmt={##1}{\noexpand\erratacustomhline},
-    listformats/onsamegroup/.setStrKeyFmt={##1}{\noexpand\erratacustomendline},
+    %%
+    listformats/listbeforenewgroup/.setStrKeyFmt={##1}{\noexpand\erratalistbeginnewgroup},
+    listformats/listafternewgroup/.setStrKeyFmt={##1}{},
+    listformats/listbeforesamegroup/.setStrKeyFmt={##1}{\noexpand\erratacustomendline},
+    listformats/listaftersamegroup/.setStrKeyFmt={##1}{},
+    %%
     listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter%
-        \begin{longtable}{ c c c p{6cm} c }%
-           & Title & Type & Action Desc & Page \\\hline%
-          },
+      \begin{longtable}{ p{1.5cm} p{1cm} c p{5cm} c }%
+        & Title & Type & Action Desc & Page %
+        },
     listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
   },
-  renewerrataenvfortable/.code={%
+  requirelongtable/.code={%
     \AtBeginDocument{%
-      \renewenvironment{errata}{%
-        \@errata@getformatted{listformats/erratalistbegin}{}{\@errata@tmp@erratalistbegin}%
-        \@errata@tmp@erratalistbegin%
-      }{\@errata@getformatted{listformats/erratalistend}{}{\@errata@tmp@erratalistend}%
-        \@errata@tmp@erratalistend%
-      }}
+      \@errata@requirepackage{longtable}
+    }
   },
   liststylefortable/.code={
     \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
       +erratumnamedlink,\noexpand\errataamersand,+action,\noexpand\errataamersand,%
       +actiondescription,\noexpand\errataamersand,+pageref}%
+    \setcounter{@errata@uniquelistlabels}{4}
   },
-  styles/tablelist/.style={liststyletablekeyformats, renewerrataenvfortable, liststylefortable},
+  styles/tablelist/.style={liststyletablekeyformats, requirelongtable,
+    defaultlistandfootstyle, liststylefortable},
 }
 %%
 %% END style tablelist
