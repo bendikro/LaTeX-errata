@@ -135,7 +135,7 @@ styles={tablelist},
     & Title & Type & Reported by & Action Desc & Page & Line \\\hline%
     }
 
-\errataSetKeyFormat[#1]{listformats/reported-by}{R: #1}
+\errataSetKeyFormat[#1]{listformats/reported-by}{#1}
 \errataSetKeyFormat[#1]{listformats/lineref}{\lineref{#1}}
 
 \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
@@ -214,7 +214,7 @@ Add: A word has been' \erratumAdd[margin=true,record=true]{added} 'here.
 Delete: A word has been' \erratumDelete{removed} 'removed here, and here' \erratumDelete{removed}'.
 
 \erratumAdd[type={refining}, description={Added listing}]{chap-one}
-%\erratumAdd[type={refining}, description={Added listing}, margin=true,foot=true,inlinechange=true,inlinemark=true]{CREF INSIDE \cref{chap-one}}
+\erratumAdd[type={refining}, description={Added listing}, margin=true,foot=true,inlinechange=true,inlinemark=true]{CREF INSIDE \cref{chap-one}}
 
 
 
@@ -272,8 +272,6 @@ PAR1: \cref{par-one}  (\getCurrentSectionNumber)
 %ERR1: \cref{errata1}
 
 ERR1 ref: \ref{errata1}
-
-
 
 
 \subsubsection{Subsubsection 1.1.2}\label{subsubsect-two}

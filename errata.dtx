@@ -48,6 +48,7 @@
 \usepackage[margin=1.4in,verbose=false]{geometry}
 \input{preamble}
 \input{erratadocutil}
+\usepackage{linecounter}
 \usepackage[show]{errata}
 %\usepackage[colorlinks=true,linkcolor=black,linktocpage=true]{hyperref}
 \usepackage[fancyhdr,today,draft]{svninfo}
@@ -114,7 +115,6 @@
 \RequirePackage{xparse}
 \RequirePackage{xstring}
 \RequirePackage{stringstrings}
-\RequirePackage{linecounter}
 \RequirePackage{kvoptions}[2009/07/21]
 \SetupKeyvalOptions {
   family = StrFmt,
@@ -1852,9 +1852,13 @@ erratumlabel, erratumname, erratumnamedlink, customvalue]{formatkeys}% Defines \
 \@errata@isnotempty{\@errata@tmp@actionid}{%
   \@errata@setvalues{cmdkeys/actionargs/.get=\@errata@tmp@actionargs}%
   \@errata@getformattede{actionformat/\@errata@tmp@actionid}{\@errata@tmp@actionargs}{\@errata@tmpfmtvalue}%
-  \@errata@setvalues[cmdkeys/]{actiondescription/.expanded={\@errata@tmpfmtvalue}}%
+%% The \@errata@tmpfmtvalue must be expanded so that the value does not refer to the
+%% macro, but the content of the macro.
+%% For actiondescription, it must only be expanded once, as the content (the actual erratum
+%% correction) may contain macro calls that must not(!) be expanded.
+  \@errata@setvalues[cmdkeys/]{actiondescription/.expand once={\@errata@tmpfmtvalue}}%
   \@errata@getformattede{actionidformat/\@errata@tmp@actionid}{}{\@errata@tmpfmtvalue}%
-  \@errata@setvalues[cmdkeys/]{action/.expanded={\@errata@tmpfmtvalue}}%
+  \@errata@setvalues[cmdkeys/]{action/.expand once={\@errata@tmpfmtvalue}}%
 }%
 %% Define macro for the args string
 \protected@edef\@errata@argsstring{#2}%
@@ -1869,8 +1873,8 @@ erratumlabel, erratumname, erratumnamedlink, customvalue]{formatkeys}% Defines \
   {% True
     \ifthenelse{\expandafter\equal{\@errata@lastuniquelabel}{\@errata@labelname}}%
     {\@errata@setvalue{labelname={}}}% Hide the label, if it equals the previous label
-    {\@errata@setvalue{prevlabel/.expanded=\@errata@labelname}%
-      \@errata@setvalue{lastuniquelabel/.expanded=\@errata@labelname}%
+    {\@errata@setvalue{prevlabel/.expand once=\@errata@labelname}%
+      \@errata@setvalue{lastuniquelabel/.expand once=\@errata@labelname}%
     }%
   }{\@errata@setvalue{prevlabel=\@errata@labelname}}%
 }{}%
