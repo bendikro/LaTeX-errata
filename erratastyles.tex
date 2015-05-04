@@ -24,13 +24,15 @@
     errformats/errfmt/.setStrKeyFmt={##1}{Err(##1)},
     errformats/eerrbeginfmt/.setStrKeyFmt={##1}{BErr(##1)},
     errformats/eerrendfmt/.setStrKeyFmt={##1}{EErr(##1)},
+    %% Set the format for the action description for each erratum command
+    actionformat/add/.setStrKeyFmt={##1}{ ##1 },
+    actionformat/delete/.setStrKeyFmt={##1}{##1},
+    actionformat/replace/.setStrKeyFmt={##1+##2}{ ##2 --> ##1},
     %%
     listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
     listformats/erratumlistitem/.setStrKeyFmt={##1}{\erratalistitem{##1}},
     listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
-    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{%
-      \@errata@hlink{##1}{\protect\makebox[\@errata@groupindent][l]{##2}}%
-    },
+    listformats/erratumnamedlink/.setStrKeyFmt={##1+##2}{\@errata@hlink{##1}{##2}},
     %%
     listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter\begin{description}},
       listformats/erratalistend/.setStrKeyFmt={##1}{\end{description}\makeatother},
@@ -89,7 +91,7 @@
     actionformat/add/.setStrKeyFmt={##1}{##1 (added)},
     actionformat/delete/.setStrKeyFmt={##1}{##1 (deleted)},
   },
-  margintcolorboxformat/.style={
+  styles/margintcolorboxstyle/.style={
     marginfmt/marginnote/.setStrKeyFmt={##1+##2}{%
       {\vspace{-4pt}%
         {\begin{tcolorbox}[size=fbox,nobeforeafter,
@@ -118,7 +120,7 @@
     }
   },
   styles/detailed/.style={detailedstylekeyformats, detailedlistandfootstyle,
-    detailedstylesetupcode, margintcolorboxformat},
+    detailedstylesetupcode},
 }
 %%
 %% END style: detailed
@@ -146,8 +148,8 @@
     listformats/listaftersamegroup/.setStrKeyFmt={##1}{},
     %%
     listformats/erratalistbegin/.setStrKeyFmt={##1}{\makeatletter%
-      \begin{longtable}{ p{1.5cm} p{1cm} c p{5cm} c }%
-        & Title & Type & Action Desc & Page %
+      \begin{longtable}{ p{1.3cm} p{1.3cm} c p{5cm} c }%
+        & Title & Type & Description & Page %
         },
     listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
   },

@@ -80,9 +80,10 @@ record=true,
 linenos=true,
 %cleveref=false,
 %hyperref=true,
-defaultargs={margin=true,foot=false},
+defaultargs={margin=true,foot=true},
 %defaultargsadd={margin=false},
 %defaultargsdelete={margin=false},
+defaultargsnote={inlinechange=false},
 requirecmddescription=false,
 %marginnote=false,
 uniquelistlabels=0,
@@ -91,8 +92,8 @@ environmenttestmode=2,
 inlinemarks=true,
 %styles={default, detailed, tablelist},
 %styles={detailed},
-styles={tablelist},
-%styles={default},
+%styles={tablelist, margintcolorboxstyle},
+styles={default},
 ]{errata}[2015/04/16]
 
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
@@ -128,20 +129,42 @@ styles={tablelist},
   \fi
 }
 
+% Example on changing the table styling
+\errataset{%
+  customliststyletablekeyformats/.style={%
+    listformats/lineref/.setStrKeyFmt={##1}{~(L \lineref{##1})},
+    %%
+    listformats/erratalistbegin/.setStrKeyFmt={##1}{%
+      \setlength\LTleft{-1cm}
+      \setlength\LTright{-1cm}
+      \makeatletter%
+      \begin{longtable}{ c@{\tcolsep{1.7}} c@{\tcolsep{2}} c p{15em} l c }%
+        & Title & Type & Action & Page
+       },
+      listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
+    actionformat/replace/.setStrKeyFmt={##1+##2}{ ##2 \shortarrow ##1},
+    actionformat/add/.setStrKeyFmt={##1}{ ##1 },
+    actionformat/delete/.setStrKeyFmt={##1}{##1},
+    actionformat/note/.setStrKeyFmt={##1}{ ##1},
+    listformats/erratumcustomlocation/.setStrKeyFmt={##1+##2}{\pageref{##1} (L \lineref{##2})},
+    setCmdKeyArgsGetTwo={erratumcustomlocation}{##1+##2}{{pageref}+{lineref}},
+  },
+  customliststylefortable/.code={
+    \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,%
+      \noexpand\errataamersand,+erratumnamedlink,\noexpand\errataamersand,%
+      +action,\noexpand\errataamersand,+actiondescription,\noexpand\errataamersand,%
+      -erratumcustomlocation}%
+    \setcounter{@errata@uniquelistlabels}{4}
+    \usepackage{stmaryrd}
+    \newcommand{\shortarrow}{\ensuremath{\vrule height 2\fontdimen22\textfont2 width 0pt\shortrightarrow}}
+    \newcommand{\tcolsep}[1]{\hspace{##1em}}
+    \errataRegisterFormatKey{erratumcustomlocation}
+  },
+  styles/customtablelist/.style={styles/tablelist, customliststyletablekeyformats,
+    customliststylefortable},
+}
 
-% Customize table to show line numbers
-\errataSetKeyFormat[#1]{listformats/erratalistbegin}{\makeatletter%
-  \begin{longtable}{ p{1cm} c c p{2cm} p{5cm} c c }%
-    & Title & Type & Reported by & Action Desc & Page & Line \\\hline%
-    }
-
-\errataSetKeyFormat[#1]{listformats/reported-by}{#1}
-\errataSetKeyFormat[#1]{listformats/lineref}{\lineref{#1}}
-
-\errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,\noexpand\errataamersand,%
-    +erratumnamedlink,\noexpand\errataamersand,+action,\noexpand\errataamersand,%
-    -reported-by,\noexpand\errataamersand,%
-    +actiondescription,\noexpand\errataamersand,+pageref,\noexpand\errataamersand,-lineref}%
+\errataset{.errataapplystyles/.list={customtablelist}}
 
 \makeatother
 
@@ -155,6 +178,8 @@ styles={tablelist},
 
 
 \begin{document}
+
+\erratumAdd[margin=false, foot=true, description={SKROT}]{before chap1}
 
 \chapter{Chapter 1}\label{chap-one}
 
@@ -179,7 +204,7 @@ Therefore, the'
 \section{Section 1.1}\label{sect-one}
 
 Note test \erratumNote[marginargs={before,after,%
-,colframe=blue!50!white}]{Changes to paragraph} space before?
+,colframe=blue!50!white},inlinemark={false}]{Changes to paragraph} space before?
 
 
 \cref{errata4} LINE NUMBER: \lineref{erratalineno4}.
@@ -348,10 +373,10 @@ this is a test of a long erratum
 
 \subsection{Subsection Margin test}\label{subsect-margin}
 
-\erratatest{}{Add test \erratumAdd{added} sentence test.}
-\erratatest{}{Add test \erratumAdd[label={customlabel1}]{added} sentence test.}
-\erratatest{inlinemark=false}{Add test \erratumAdd[inlinemark=false]{added} sentence test.}
-\erratatest{marginargs={size=fbox}}{Add test \erratumAdd[marginargs={size=fbox,colframe=green}]{added} sentence test.}
+\erratatest{}{Add test \erratumAdd{added word} sentence test.}
+\erratatest{}{Add test \erratumAdd[label={customlabel1}, description={forgotten words}]{added missing word} sentence test.}
+\erratatest{inlinemark=false}{Add test \erratumAdd[inlinemark=false, description={missing word}]{new} sentence test.}
+\erratatest{marginargs={size=fbox}}{Add test \erratumAdd[marginargs={size=fbox,colframe=green}, description={word 'test' missing}]{test} sentence test.}
 
 customlabel: \Cref{customlabel1}
 

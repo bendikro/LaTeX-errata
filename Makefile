@@ -2,7 +2,7 @@ PREFIX = lib
 PACKAGE = errata
 DTX.sty.base = errata
 EXAMPLE.base = erratatest
-EXAMPLE.deps := strkeyformatter.sty /usr/share/texlive/texmf-dist/tex/latex/lineno/lineno.sty
+EXAMPLE.deps := strkeyformatter.sty
 
 BUILD_DIR = build
 

@@ -13,101 +13,111 @@
 \RequirePackage{stringstrings}
 \RequirePackage{kvoptions}[2009/07/21]
 \SetupKeyvalOptions {
-  family = StrFmt,
-  prefix = @StrFmtOpt@,
+  family = StrKeyFmt,
+  prefix = @StrKeyFmtOpt@,
 }
 \DeclareStringOption[-]{notemptyprefix}
 \DeclareStringOption[+]{evenemptyprefix}
-\DeclareStringOption[@StrFmt@]{family}
-\ProcessKeyvalOptions{StrFmt}
+\DeclareStringOption[@StrKeyFmt@]{family}
+\ProcessKeyvalOptions{StrKeyFmt}
 %%
-\pgfkeysdefnargs{/handlers/.setStrKeyFmt}{2}{%
+\def\@StrKeyFmt@set{\pgfqkeys{/\@StrKeyFmtOpt@family}}
+\def\@StrKeyFmt@setalso{\pgfqkeysalso{/\@StrKeyFmtOpt@family}}
+\NewDocumentCommand{\@StrKeyFmt@ifnotempty}{ m m }{\ifthenelse{\equal{#1}{}}{}{#2}}
+\NewDocumentCommand{\@StrKeyFmt@isempty}{ m m }{\ifthenelse{\equal{#1}{}}{#2}{}}
+%%
+\pgfkeysdefnargs{/handlers/.setStrKeyWithDefFmt}{3}{%
   \pgfkeysdefargs{\pgfkeyscurrentpath/.@formatter}{#1}{%
-    \pgfkeyssetvalue{\pgfkeysdefaultpath.@formatted/.@def}{#2}}}
-%%
-\pgfkeysdefnargs{/handlers/.@StrFmt@setdefaultformat}{4}{%
+    \pgfkeyssetvalue{\pgfkeysdefaultpath.@formatter/.@formatted}{#3}}%
+  \@StrKeyFmt@ifnotempty{#2}{\pgfkeys{\pgfkeyscurrentpath/.@formatter/.default={#2}}}%
+}
+\pgfkeysdefnargs{/handlers/.setStrKeyFmt}{2}{%
+  \pgfqkeys{\pgfkeyscurrentpath}{.setStrKeyWithDefFmt={#1}{}{#2}}%
+}
+\pgfkeysdefnargs{/handlers/.@StrKeyFmt@setdefaultformat}{4}{%
   \xintFor ##9 in {#4} \do {%
-    \@StrFmt@set{#1/##9/.setStrKeyFmt={#2}{{#3}}}% The default formater
+    \@StrKeyFmt@set{#1/##9/.setStrKeyFmt={#2}{{#3}}}% The default formater
   }}
-\pgfkeys{/handlers/.also/.code={\pgfkeysalso{#1}}}
-\pgfkeys{/handlers/.ealso/.code={%
-    \pgfqkeysalso{\pgfkeyscurrentpath}{.also/.expand once={#1}}}}
+\pgfkeys{%
+  /handlers/.also/.code={\pgfkeysalso{#1}},
+  /handlers/.ealso/.code={\pgfqkeysalso{\pgfkeyscurrentpath}{.also/.expand once={#1}}},
+}
+\pgfkeysdefnargs{/handlers/.@StrKeyFmt@getformatted}{4}{%
+  \@StrKeyFmt@setvalues[#1]{.@formatter#2={#3}}%
+  \pgfkeysgetvalue{/\@StrKeyFmtOpt@family/#1/.@formatter/.@formatted}{#4}%
+}
 %%
-\def\@StrFmt@set{\pgfqkeys{/\@StrFmtOpt@family}}
-\DeclareExpandableDocumentCommand{\@StrFmt@setvalues}{ O{} m } {\@StrFmt@set{#1/.cd, #2}}
-\DeclareExpandableDocumentCommand{\@StrFmt@getvalue}{ m } {\pgfkeysvalueof{\@StrFmtOpt@family/#1}}
+\DeclareExpandableDocumentCommand{\@StrKeyFmt@setvalues}{ O{} m } {\@StrKeyFmt@set{#1/.cd, #2}}
+\DeclareExpandableDocumentCommand{\@StrKeyFmt@getvalue}{ m } {\pgfkeysvalueof{\@StrKeyFmtOpt@family/#1}}
 \NewDocumentCommand{\SetDefaultKeylistFormat}{ O{#1} m m }{% format, group, keys
-  \@StrFmt@set{#2/.@StrFmt@setdefaultformat={#2}{#1}{#1}{#3}}%
+  \@StrKeyFmt@set{#2/.@StrKeyFmt@setdefaultformat={#2}{#1}{#1}{#3}}%
 }
-\NewDocumentCommand{\StrFmtgetformattedef}{ m m m }{% key, args, macroname
-  \@StrFmt@setvalues[#1]{.@formatter/.expanded={#2}}%
-  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
+\NewDocumentCommand{\StrKeyFmtSetKeyFormat}{ O{} m m }{% PGF argument pattern, key, formated output
+  \@StrKeyFmt@set{#2/.setStrKeyFmt={#1}{#3}}% Set custom format
 }
-\NewDocumentCommand{\StrFmtgetformattedee}{ m m m }{% key, args, macroname
-  \@StrFmt@setvalues[#1]{.@formatter/.expand twice={#2}}%
-  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
-}
-\NewDocumentCommand{\StrFmtgetformattede}{ m m m }{% key, args, macroname
-  \@StrFmt@setvalues[#1]{.@formatter/.expand once={#2}}%
-  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
-}
-\NewDocumentCommand{\StrFmtgetformatted}{ m m m }{% key, args, macroname
-  \@StrFmt@setvalues[#1]{.@formatter={#2}}%
-  \pgfkeysgetvalue{/\@StrFmtOpt@family/#1/.@formatted/.@def}{#3}%
-}
-\NewDocumentCommand{\StrFmtSetKeyFormat}{ O{} m m }{% PGF argument pattern, key, formated output
-  \@StrFmt@set{#2/.setStrKeyFmt={#1}{#3}}% Set custom format
-}
-\NewDocumentCommand{\@StrFmt@isnotempty}{ m m }{\ifthenelse{\equal{#1}{}}{}{#2}}
-\NewDocumentCommand{\@StrFmt@isempty}{ m m }{\ifthenelse{\equal{#1}{}}{#2}{}}
 %%
-\newcommand\@StrFmt@ifiskey[1]{\ifboolexpr{ test{\IfBeginWith{#1}{\@StrFmtOpt@evenemptyprefix}} or test{\IfBeginWith{#1}{\@StrFmtOpt@notemptyprefix}}}}
+\NewDocumentCommand{\StrKeyFmtgetformattedef}{ m m m }{% key, args, macroname
+  \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expanded}{#2}{#3}}%
+}
+\NewDocumentCommand{\StrKeyFmtgetformattedee}{ m m m }{% key, args, macroname
+  \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expand twice}{#2}{#3}}%
+}
+\NewDocumentCommand{\StrKeyFmtgetformattedeo}{ m m m }{% key, args, macroname
+  \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expand once}{#2}{#3}}%
+}
+\NewDocumentCommand{\StrKeyFmtgetformatted}{ m m m }{% key, args, macroname
+  \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{}{#2}{#3}}%
+}
 %%
-\@StrFmt@set{formateroutputt/.initial={}}
+\newcommand\@StrKeyFmt@ifiskey[1]{\ifboolexpr{
+    test{\IfBeginWith{#1}{\@StrKeyFmtOpt@evenemptyprefix}}
+    or test{\IfBeginWith{#1}{\@StrKeyFmtOpt@notemptyprefix}}}}
+%%
+\@StrKeyFmt@set{formateroutputt/.initial={}}
 %% Arguments:
 %% [1]: [optional]macro name to store results
 %% [2]: The command parent key for the keys
 %% [3]: format group key
 %% [4]: Keywords (as comma separated values)
 %% [5]: Text containing the keys that define this formatted text to produce
-\NewDocumentCommand{\@StrFmt@FormatKeywords}{ O{} m m m m }{% format group key, parent key, formatkey parent , keys/values, format-string
-\@StrFmt@set{formateroutputt={}}%
+\NewDocumentCommand{\@StrKeyFmt@FormatKeywords}{ O{} m m m m }{% format group key, parent key, formatkey parent , keys/values, format-string
+\@StrKeyFmt@set{formateroutputt={}}%
 %% Reset arg key values
 \xintFor ##1 in {#5} \do {%
-  \ifboolexpr{ test {\@StrFmt@ifiskey{##1}} }%
-  {\StrGobbleLeft{##1}{1}[\@StrFmt@tmp@right]%
-    \pgfkeysifdefined{/\@StrFmtOpt@family/#3/\@StrFmt@tmp@right}{\@StrFmt@set{#3/\@StrFmt@tmp@right={}}}{}%
+  \ifboolexpr{ test {\@StrKeyFmt@ifiskey{##1}} }%
+  {\StrGobbleLeft{##1}{1}[\@StrKeyFmt@tmp@right]%
+    \pgfkeysifdefined{/\@StrKeyFmtOpt@family/#3/\@StrKeyFmt@tmp@right}{\@StrKeyFmt@set{#3/\@StrKeyFmt@tmp@right={}}}{}%
   }{}% End IfBeginWith
 }%
 %%
-\@StrFmt@isnotempty{#4}{%
+\@StrKeyFmt@ifnotempty{#4}{%
   %% If key/val options, set the values
   \xintFor ##1 in {#4} \do {%
-    \@StrFmt@isnotempty{##1}{\@StrFmt@set{#3/##1}}%
+    \@StrKeyFmt@ifnotempty{##1}{\@StrKeyFmt@set{#3/##1}}%
   }}%
 %% Process format keys
 \xintFor ##9 in {#5} \do {%
-  \@StrFmt@isnotempty{##9}{% Just for safety
-    \ifboolexpr{ test {\@StrFmt@ifiskey{##9}} } {% Test if it's a key
-      \StrGobbleLeft{##9}{1}[\@StrFmt@tmp@right]%
-      \pgfkeysgetvalue{/\@StrFmtOpt@family/#3/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}%
+  \@StrKeyFmt@ifnotempty{##9}{% Just for safety
+    \ifboolexpr{ test {\@StrKeyFmt@ifiskey{##9}} } {% Test if it's a key
+      \StrGobbleLeft{##9}{1}[\@StrKeyFmt@tmp@right]%
+      \pgfkeysgetvalue{/\@StrKeyFmtOpt@family/#3/\@StrKeyFmt@tmp@right}{\@StrKeyFmt@tmpvalue}%
       %% Fetch the value for the key
-      %% If the key is prefixed with \@StrFmtOpt@notemptyprefix, and the value is empty, it's ignored
-      \ifboolexpr{ test{\IfBeginWith{##9}{\@StrFmtOpt@evenemptyprefix}}
-        or not test{\ifthenelse{\equal{\@StrFmt@tmpvalue}{}}}} {%
-        \StrFmtgetformattede{#2/\@StrFmt@tmp@right}{\@StrFmt@tmpvalue}{\@StrFmt@tmp@fmtvalue}%
-        \@StrFmt@set{formateroutputt/.append/.expand once={\@StrFmt@tmp@fmtvalue}}%
+      %% If the key is prefixed with \@StrKeyFmtOpt@notemptyprefix, and the value is empty, it's ignored
+      \ifboolexpr{ test{\IfBeginWith{##9}{\@StrKeyFmtOpt@evenemptyprefix}}
+        or not test{\ifthenelse{\equal{\@StrKeyFmt@tmpvalue}{}}}} {%
+        \StrKeyFmtgetformattedeo{#2/\@StrKeyFmt@tmp@right}{\@StrKeyFmt@tmpvalue}{\@StrKeyFmt@tmp@fmtvalue}%
+        \@StrKeyFmt@set{formateroutputt/.append/.expand once={\@StrKeyFmt@tmp@fmtvalue}}%
       }{}%
     }{% Not a key
-      \@StrFmt@set{formateroutputt/.append={##9}}%
+      \@StrKeyFmt@set{formateroutputt/.append={##9}}%
 }}}%
-\@StrFmt@set{formateroutputt/.get=\@StrFmt@formateroutputt}%
+\@StrKeyFmt@set{formateroutputt/.get=\@StrKeyFmt@formateroutputt}%
 \ifthenelse{\equal{#1}{}}{%
 %% Output the result here in the document
-\@StrFmt@formateroutputt%
+\@StrKeyFmt@formateroutputt%
 }{%
 %% Store the in macro from ARG1
-\protected@csxdef{#1}{\expandonce{\@StrFmt@formateroutputt}}%
+\protected@csxdef{#1}{\expandonce{\@StrKeyFmt@formateroutputt}}%
 }}%
 \endinput
 %%
