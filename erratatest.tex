@@ -27,7 +27,7 @@
 \makeatother
 \setpagewiselinenumbers
 \linenumbers
-\modulolinenumbers[100]
+%\modulolinenumbers[100]
 }{
 \newif\ifLineNumbers \LineNumbersfalse %
 \def\nolinenumbers{}
@@ -146,6 +146,7 @@ styles={default},
     actionformat/add/.setStrKeyFmt={##1}{ ##1 },
     actionformat/delete/.setStrKeyFmt={##1}{##1},
     actionformat/note/.setStrKeyFmt={##1}{ ##1},
+    footformats/erratumcustomlocation/.setStrKeyFmt={##1+##2}{ P:\pageref{##1} (L \lineref{##2})},
     listformats/erratumcustomlocation/.setStrKeyFmt={##1+##2}{\pageref{##1} (L \lineref{##2})},
     setCmdKeyArgsGetTwo={erratumcustomlocation}{##1+##2}{{pageref}+{lineref}},
   },
@@ -154,6 +155,7 @@ styles={default},
       \noexpand\errataamersand,+erratumnamedlink,\noexpand\errataamersand,%
       +action,\noexpand\errataamersand,+actiondescription,\noexpand\errataamersand,%
       -erratumcustomlocation}%
+    \errataSetFootFormat{+description, +actiondescription, -erratumcustomlocation}
     \setcounter{@errata@uniquelistlabels}{4}
     \usepackage{stmaryrd}
     \newcommand{\shortarrow}{\ensuremath{\vrule height 2\fontdimen22\textfont2 width 0pt\shortrightarrow}}
@@ -347,12 +349,6 @@ SECT2.1: \cref{sect-two-one}  (\getCurrentSectionNumber)
 
 \erratumAdd[inlinemark=true]{inlinemark}
 
-\begin{inlinelist}
-  \item{} has the \erratumDelete[type={grammar}]{marg} same behavior, and
-
-  \item{} when the competing traffic does not care about per-packet latency.
-\end{inlinelist}
-
 
 Here we have removed \erratumDelete[id={testid}, type={Deletion}]{removed} a word.
 
@@ -444,8 +440,38 @@ REF(equationlabel): \ref{equationlabel}
 
 \chapter{Testing special environments}\label{chap-special-environments}
 
+\section{List}\label{subsect-inlinelist}
 
-\subsection{Equation}\label{subsect-Equation}
+\begin{inlinelist}
+  \item{} has the \erratumDelete[type={grammar}]{marg} same behavior, and
+
+  \item{} when the competing traffic does not care about per-packet latency.
+
+  \item{} aaaaaaaaa aaaaaaaaaaaa aaaaaaaaaa aaaaaaa aaaaaaaa aaaaaaaaaa
+
+  \item{} bbbbbbbb bbbbbbbbbbbb bbbbbbbb bbbbbbb bbbbbbbbb bbbbbbbbb bbbbbbbb
+
+  \item{} cccccc cccccccccc cccccccc cccccc ccccccc ccccccccc ccccccc cccccccc
+
+  \item{} has the \erratumAdd[type={grammar}]{test linelabel in inner mode}
+
+  \item{} dddddddd ddddddd dddddddd ddddddd dddddd ddddddddd dddddd
+
+  \item{} eeeeeeee eeeeeee eeeeeeee eeeeeee eeeeee eeeeeeeee eeeeee
+
+\end{inlinelist}
+
+
+This might be considered fair practice when the competing traffic
+\begin{inlinelist}
+  \item{} has the \erratumDelete[type={grammar}]{the} same behavior, and
+
+  \item{} when the competing traffic does not care about per-packet latency.
+\end{inlinelist}
+
+
+
+\section{Equation}\label{subsect-Equation}
 
 \begin{examplecode}{codeandresult, title=Title}
 \begin{equation}\label{customlabel}
@@ -458,7 +484,7 @@ REF(equationlabel): \ref{equationlabel}
 \end{examplecode}
 %\docaption{Some short errata}
 
-\subsection{Tables}\label{subsect-Tables}
+\section{Tables}\label{subsect-Tables}
 
 \begin{table}[htbp]
   \centering
@@ -472,7 +498,7 @@ REF(equationlabel): \ref{equationlabel}
 %\immediate\typeout{Erratum AFTER TABULARX}%
 
 
-\subsection{Colorboxes}\label{subsect-Colorboxes}
+\section{Colorboxes}\label{subsect-Colorboxes}
 
 \begin{lstlisting}
 In this sentence\erratumAdd{.} we added a comma without an

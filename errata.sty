@@ -204,13 +204,15 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 %% Hypertarget creates a hyper-link anchor, used to link to this location with \hyperlink
 %% The label is needed for such as ref/pageref/cref
 \RenewDocumentCommand{\@errata@htargeterratum}{ O{} O{} m m }{%
-  \Hy@raisedlink{\hypertarget{#3}{}}%
+ \Hy@raisedlink{\hypertarget{#3}{}}%
   \@errata@ifempty{#1}{% Add labels
     \@errata@label{#3}% Primary label
     \if@errataOpt@linenos%
     \ifboolexpr{ test {\ifdolineno} }{%
-      \ifinner\else%
       \edef\@errata@expanded@arg{\@errata@linenoname{\the@errata@erratum}}%
+      \ifinner%
+      \expandafter\@LN@postlabel\expandafter{\@errata@expanded@arg}%
+      \else%
       \expandafter\linelabel\expandafter{\@errata@expanded@arg}%
       \fi%
     }{}%
