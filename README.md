@@ -7,3 +7,19 @@
 
 Copyright (c) 2007 Michael Kohlhase
 The package is distributed under the terms of the LaTeX Project Public License (LPPL)
+
+## Building
+
+Requirements:
+
+stmaryrd.sty: (ubuntu: texlive-math-extra)
+
+```
+make all
+```
+
+Enable verbose output from pdflatex:
+
+```
+VERBOSE=true make all
+```

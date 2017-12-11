@@ -10,6 +10,7 @@
 \ProvidesPackage{errata}[2015/04/16 v1.0 Errata Management]
 \RequirePackage{xifthen}
 \RequirePackage{pgfkeys}
+\RequirePackage{pgffor}
 \RequirePackage{etoolbox}
 \RequirePackage{xpatch}
 \RequirePackage{xparse}
@@ -355,6 +356,10 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \typeout{}%
 \fi}
 %%
+%% An immediate version of \textbackslash protected@write to write errata entries to file
+\let\@errata@write\protected@write
+\xpatchcmd{\@errata@write}{\write}{\immediate\write}{}{}
+%%
 \NewDocumentCommand{\@errata@dorecord}{ m m m } {% formattype, listformat, argsstring
 \ifboolexpr{ test {\ifdorecord} }{%
 %% Get the formatted code for a new group
@@ -375,7 +380,7 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \@errata@setvalue{cmdkeys/erratumlistitemtitle/.get=\@errata@tmp@itemtitle}%
 \StrKeyFmtgetformattedef{listformats/erratumlistitemtitle}{\@errata@tmp@itemtitle}{\@errata@tmp@formatteditemtitle}%
 \StrKeyFmtgetformatted{listformats/erratumlistitem}{\@errata@tmp@formatteditemtitle}{\@errata@tmplistitem}%
-\protected@write\@errata@file{}%
+\@errata@write\@errata@file{}%
 {\string\erratumItem[#1][#2]{\@errata@tmplistitem}{#3}}%
 }
 \newif\if@errata@inbadenvironment

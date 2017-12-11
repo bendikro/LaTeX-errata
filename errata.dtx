@@ -18,6 +18,7 @@
 % \iffalse
 %<*driver>
 \documentclass[twoside]{ltxdoc}
+%\RequirePackage{stmaryrd}% Needed to build
 \makeatletter
 \def\SpecialMainIndex#1{%
 \@bsphack
@@ -963,6 +964,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \ProvidesPackage{errata}[2015/04/16 v1.0 Errata Management]
 \RequirePackage{xifthen}
 \RequirePackage{pgfkeys}
+\RequirePackage{pgffor}
 \RequirePackage{etoolbox}
 \RequirePackage{xpatch}
 \RequirePackage{xparse}
@@ -1708,6 +1710,16 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \fi}
 %    \end{macrocode}
 % \end{macro}
+%%
+% \begin{macro}{\@errata@write}
+%% An immediate version of \textbackslash protected@write to write errata entries to file
+%    \begin{macrocode}
+% get a copy of `\protected@write
+\let\@errata@write\protected@write
+% patch the copy to add \immediate
+\xpatchcmd{\@errata@write}{\write}{\immediate\write}{}{}
+%    \end{macrocode}
+% \end{macro}
 %
 %%
 % \begin{macro}{\@errata@dorecord}
@@ -1736,7 +1748,7 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \@errata@setvalue{cmdkeys/erratumlistitemtitle/.get=\@errata@tmp@itemtitle}%
 \StrKeyFmtgetformattedef{listformats/erratumlistitemtitle}{\@errata@tmp@itemtitle}{\@errata@tmp@formatteditemtitle}%
 \StrKeyFmtgetformatted{listformats/erratumlistitem}{\@errata@tmp@formatteditemtitle}{\@errata@tmplistitem}%
-\protected@write\@errata@file{}%
+\@errata@write\@errata@file{}%
 {\string\erratumItem[#1][#2]{\@errata@tmplistitem}{#3}}%
 }
 %    \end{macrocode}
