@@ -15,10 +15,10 @@
 % Needed for line numbers
 \usepackage{lineno}
 
-\setpagewiselinenumbers
-\linenumbers
-% Remove the line numbers in the margin when using the lineno package
-\renewcommand{\LineNumber}{}
+%\setpagewiselinenumbers
+%\linenumbers
+%% Remove the line numbers in the margin when using the lineno package
+%\renewcommand{\LineNumber}{}
 
 \usepackage[bookmarks,breaklinks,pdfpagelabels,
 colorlinks=true,  % Colors links instead of ugly boxes
@@ -33,9 +33,11 @@ margins=true,
 foots=true,
 record=true,
 linenos=true,
+%linenos=false,
 defaultargs={margin=true,foot=true},
 defaultargsnote={inlinechange=false},
 %requirecmddescription=false,
+requirecmddescription=true,
 %marginnote=false,
 marginnote=true,
 uniquelistlabels=0,
@@ -43,7 +45,7 @@ inlinemarks=false,
 %inlinechanges=false,
 inlinemarks=true,
 styles={tablelist},
-]{errata}[2015/04/16]
+]{errata2}[2015/04/16]
 
 % change margin node format to use tcolorbox
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
@@ -89,10 +91,13 @@ styles={tablelist},
       -erratumcustomlocation}%
     \errataSetFootFormat{+description, +actiondescription, -erratumcustomlocation}
     \setcounter{@errata@uniquelistlabels}{4}
-    \usepackage{stmaryrd}
     \newcommand{\shortarrow}{\ensuremath{\vrule height 2\fontdimen22\textfont2 width 0pt\shortrightarrow}}
     \newcommand{\tcolsep}[1]{\hspace{##1em}}
     \errataRegisterFormatKey{erratumcustomlocation}
+    \AtBeginDocument{%
+      \@errata@requirepackage{lineno}% Needed for linenumbers (lineref)
+      \@errata@requirepackage{stmaryrd}% Needed for macros \shortrightarrow
+    }
   },
   styles/customtablelist/.style={styles/tablelist, customliststyletablekeyformats,
     customliststylefortable},
@@ -108,6 +113,7 @@ styles={tablelist},
 \begin{document}
 
 \section{First section}\label{sect:first}
+
 I misspelled a \erratumReplace{typo}{ord}{word} on this line.
 
 \section{Second section}

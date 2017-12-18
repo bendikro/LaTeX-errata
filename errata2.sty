@@ -1,13 +1,14 @@
 %%
-%% This is file `errata.sty',
+%% This is file `errata2.sty',
 %% generated with the docstrip utility.
 %%
 %% The original source files were:
 %%
-%% errata.dtx  (with options: `package')
+%% errata2.dtx  (with options: `package')
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{errata}[2015/04/16 v1.0 Errata Management]
+\ProvidesPackage{errata2}[2017/12/11 v1.0 Errata Management]
+\def\erratatwopackage2version{1.0}
 \RequirePackage{xifthen}
 \RequirePackage{pgfkeys}
 \RequirePackage{pgffor}
@@ -15,7 +16,7 @@
 \RequirePackage{xpatch}
 \RequirePackage{xparse}
 \RequirePackage{xinttools} % defines \xintFor macro
-\RequirePackage[family=@errata@]{strkeyformatter}
+\RequirePackage[family=@errata@]{errata2strkeyformatter}
 \RequirePackage{kvoptions}[2009/07/21]
 \SetupKeyvalOptions {
   family = Errata,
@@ -36,7 +37,7 @@
 \DeclareStringOption[0]{uniquelistlabels}[3]
 \DeclareBoolOption[true]{inlinemarks}
 \DeclareBoolOption[true]{inlinechanges}
-\DeclareStringOption[default]{styles}
+\DeclareStringOption[legacy]{styles}
 \DeclareStringOption[]{defaultargs}
 \DeclareStringOption[]{defaultargsadd}
 \DeclareStringOption[]{defaultargsdelete}
@@ -44,10 +45,10 @@
 \DeclareStringOption[]{defaultargsnote}
 \ProcessKeyvalOptions{Errata}
 %% Utility macros
-\input{erratapgfkeysextra}
+\input{errata2pgfkeysextra.sty}
 \NewDocumentCommand{\@errata@requirepackage}{ m }{%
   \@ifpackageloaded{#1}{}{
-    \PackageWarning{errata}{The current errata settings require the #1 package to be loaded.
+    \PackageWarning{errata2}{The current errata settings require the #1 package to be loaded.
       Loading package #1...}
     \RequirePackage{#1}
   }
@@ -79,12 +80,6 @@
 \@errata@setvalues[cmdkeys/]{defaultargsreplace/.append style/.expand once={\@errataOpt@defaultargsreplace}}
 \@errata@setvalues[cmdkeys/]{defaultargsdelete/.append style/.expand once={\@errataOpt@defaultargsdelete}}
 \@errata@setvalues[cmdkeys/]{defaultargsnote/.append style/.expand once={\@errataOpt@defaultargsnote}}
-%%
-\AtBeginDocument{%
-  \ifboolexpr{ bool{@errataOpt@linenos} and not test{\@ifpackageloaded{lineno}} } {%
-    \@errata@requirepackage{lineno}
-  }{}
-}
 %%
 \if@errataOpt@show
 \@errataOpt@marginstrue%
@@ -152,7 +147,8 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
   \errataset{formatkeys/.append code=#1}%
   \@errata@setcmdkeys{#1}
 }
-%% Set default formater for all keys
+%%
+%%      Set default formater for all keys
 \SetDefaultKeylistFormat[#1]{listformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{footformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{errformats}{errfmt, eerrbeginfmt, eerrendfmt}
@@ -177,7 +173,7 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \@errata@setvalue{lastcommandinlinevalue/.gstore in=\lastcommandinlinevalue}
 \@errata@setvalue{lastcommandinlinevalue={}}
 \@errata@setvalue{inlinevalue/.initial={}}
-\input{erratastyles}
+\input{errata2styles.sty}
 \errataset{.errataapplystyles/.list={basekeyformats, \@errataOpt@styles}}
 %%
 \DeclareExpandableDocumentCommand{\@errata@htargetname}{ m } {errata#1}%
@@ -698,4 +694,4 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 \fi
 \endinput
 %%
-%% End of file `errata.sty'.
+%% End of file `errata2.sty'.

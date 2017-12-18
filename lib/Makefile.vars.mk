@@ -9,10 +9,8 @@ DTX.ins = $(DTX.sty.base:%=%.sty)
 DTX.cls = $(DTX.cls.base:%=%.cls)
 DTX.pdf	= $(sort $(DTX.base:%=%.pdf)) # sort to remove duplicates
 
-# The examples
-CUSTOM.pdf	= $(CUSTOM.base:%=%.pdf)
-CUSTOM.tex	= $(CUSTOM.base:%=%.tex)
-
+# Build custom PDF document
+CUSTOM.pdf	= $(CUSTOM:%=%.pdf)
 
 # The TeX Directory Structure (see http://www.tug.org/tds/tds.html)
 TDSDIR = /tmp/$(TDSCOLL).tds

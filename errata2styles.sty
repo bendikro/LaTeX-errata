@@ -1,12 +1,12 @@
 %%
-%% This is file `erratastyles.tex',
+%% This is file `errata2styles.sty',
 %% generated with the docstrip utility.
 %%
 %% The original source files were:
 %%
-%% errata.dtx  (with options: `erratastyles')
+%% errata2.dtx  (with options: `errata2styles.sty')
 %% 
-%% Define the default errata formatting
+%% Define the legacy errata formatting
 %%
 \NewDocumentCommand{\erratalistitem}{ m }{\item[#1]}
 \errataset{%
@@ -39,7 +39,7 @@
   },
 }
 \errataset{%
-  defaultkeyformats/.style={%
+  legacykeyformats/.style={%
     %% Formats for the footnotes
     footformats/description/.setStrKeyFmt={##1}{~##1},
     footformats/action/.setStrKeyFmt={##1}{~##1},
@@ -58,15 +58,15 @@
     listformats/action/.setStrKeyFmt={##1}{~##1},
     listformats/actiondescription/.setStrKeyFmt={##1}{~##1},
   },
-  defaultlistandfootstyle/.code={%
-%% Define the default format of the errata list and footnotes
+  legacylistandfootstyle/.code={%
+%% Define the legacy format of the errata list and footnotes
     \errataSetListFormat{+erratumlisttarget, +description}
     \errataSetFootFormat{+description, +actiondescription}
   },
-  styles/default/.style={styles/basekeyformats, defaultkeyformats, defaultlistandfootstyle},
+  styles/legacy/.style={styles/basekeyformats, legacykeyformats, legacylistandfootstyle},
 }
 %%
-%% END style: default
+%% END style: legacy
 %%
 %% Define the detailed formatting
 %%
@@ -165,11 +165,11 @@
     \setcounter{@errata@uniquelistlabels}{4}
   },
   styles/tablelist/.style={liststyletablekeyformats, requirelongtable,
-    defaultlistandfootstyle, liststylefortable},
+    legacylistandfootstyle, liststylefortable},
 }
 %%
 %% END style tablelist
 %%
 \endinput
 %%
-%% End of file `erratastyles.tex'.
+%% End of file `errata2styles.sty'.

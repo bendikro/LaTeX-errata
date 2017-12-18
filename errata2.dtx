@@ -17,7 +17,7 @@
 %
 % \iffalse
 %<*driver>
-\documentclass[twoside]{ltxdoc}
+\documentclass[oneside]{ltxdoc}
 %\RequirePackage{stmaryrd}% Needed to build
 \makeatletter
 \def\SpecialMainIndex#1{%
@@ -47,10 +47,11 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1.4in,verbose=false]{geometry}
+\usepackage{lmodern}
 \input{preamble}
-\input{erratadocutil}
-\usepackage{linecounter}
-\usepackage[show]{errata}
+\input{errata2docutil}
+\usepackage{errata2linecounter}
+\usepackage[show,styles={detailed}]{errata2}
 %\usepackage[colorlinks=true,linkcolor=black,linktocpage=true]{hyperref}
 \usepackage[fancyhdr,today,draft]{svninfo}
 \pagestyle{fancyplain}\fancyhead[RE,LO]{\leftmark}\fancyhead[LE,RO]{\thepage}
@@ -65,13 +66,13 @@
 \begin{document}
 \svnInfo $Id$
 \svnKeyword $HeadURL$
-\DocInput{errata.dtx}
+\DocInput{errata2.dtx}
 \end{document}
 %%% CheckSum{508}
 %</driver>
-%<*linecounter.sty>
+%<*errata2linecounter.sty>
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{linecounter}[]
+\ProvidesPackage{errata2linecounter}[]
 \newread\File
 \makeatletter
 \newcommand{\CountLinesInFile}[2]{% Filename, counter name
@@ -86,9 +87,9 @@
   \closein\File
 }
 \makeatother
-%</linecounter.sty>
-%<*erratapgfkeysextra.tex>
-%% Fix setting global values with pgfkeys
+%</errata2linecounter.sty>
+%<*errata2pgfkeysextra.sty>
+%% These changes add functions (with prefix g) to enable setting global values with pgfkeys
 \long\def\pgfkeysgdef#1#2{%
   \long\def\pgfkeys@temp##1\pgfeov{#2}%
   \global\pgfkeyslet{#1/.@cmd}{\pgfkeys@temp}%
@@ -109,10 +110,10 @@
 \pgfkeys{/handlers/.gappend/.code={\pgfkeysgaddvalue{\pgfkeyscurrentpath}{}{#1}}}
 \pgfkeys{/handlers/.gstore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\gdef#1{##1}}}}
 \pgfkeys{/handlers/.gestore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\global\edef#1{##1}}}}
-%</erratapgfkeysextra.tex>
-%<*strkeyformatter.sty>
+%</errata2pgfkeysextra.sty>
+%<*errata2strkeyformatter.sty>
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{strkeyformatter}[2015/04/06 v1.0 Format a string based on key/value input]
+\ProvidesPackage{errata2strkeyformatter}[2015/04/06 v1.0 Format a string based on key/value input]
 \RequirePackage{xparse}
 \RequirePackage{xstring}
 \RequirePackage{stringstrings}
@@ -224,8 +225,8 @@
 %% Store the in macro from ARG1
 \protected@csxdef{#1}{\expandonce{\@StrKeyFmt@formateroutputt}}%
 }}%
-%</strkeyformatter.sty>
-%<*erratadocutil.tex>
+%</errata2strkeyformatter.sty>
+%<*errata2docutil.tex>
 \usepackage[fleqn,tbtags]{mathtools}
 \usepackage{xparse}
 \usepackage{caption}
@@ -331,12 +332,13 @@ crefname={example}{examples},
 % Redefine thempfootnote to fix footnote numbering inside tcolorboxes
 \renewcommand{\thempfootnote}{\arabic{mpfootnote}}
 \NewDocumentCommand{\docaption}{ O{exfig} m }{{\captionsetup{type=#1,position=below,belowskip=12pt} \caption{#2}}}
-%</erratadocutil.tex>
+%</errata2docutil.tex>
 %<*preamble.tex>
 \usepackage{bookmark}
 \PassOptionsToPackage{log-declarations=false}{xparse}
 \usepackage{xparse}
 \usepackage{cleveref}
+\usepackage{fancyhdr}
 \usepackage{tcolorbox}[2015/01/14] % Minimum v3.40
 \tcbuselibrary{most}
 \tcbuselibrary{documentation}
@@ -403,15 +405,29 @@ title={\thesection.\thetcbcounter~#2}, #1}
 % \changes{v0.4}{2015/04/13}{moved to GIT, fixing switches}
 % \changes{v1.0}{2015/04/16}{Added support for links with hyperref, and customization through formatters}
 %
-% \GetFileInfo{errata.sty}
+% \GetFileInfo{errata2.sty}
 %
 % \MakeShortVerb{\|}
-% \title{Recording Errata in {\LaTeX} Documents\thanks{Version {\fileversion} (last revised
-%        {\filedate})}}
-%    \author{Michael Kohlhase\\
-%            Computer Science, Jacobs University,  Bremen, Germany\\
-%            \url{http://kwarc.info/kohlhase}\\[6mm]Bendik Rønning Opstad\\(bro.devel@gmail.com)}
-% \maketitle
+% \pagestyle{fancy}
+%
+%
+% \begin{titlepage}
+% \begin{center}
+% \begin{tcolorbox}[enhanced,hbox,tikznode,left=8mm,right=8mm,boxrule=0.4pt,
+%   colback=white,colframe=black!50!yellow,
+%   drop lifted shadow=black!50!yellow,arc is angular,
+%   before=\par\vspace*{5mm},after=\par\bigskip]
+% {\bfseries\LARGE The \texttt{errata2} package}\\[3mm]
+% {\large Manual for version \erratatwopackage2version (\today)}
+% \\[4mm]
+% \normalsize\url{https://github.com/bendikro/LaTeX-errata}\par
+% \end{tcolorbox}
+% {\large Bendik Rønning Opstad \\\url{bro.devel+errata@gmail.com}\\[6mm]
+%
+% Errata2 package is based on the errata package by Michael Kohlhase
+%
+% }
+% \end{center}
 %
 % \begin{abstract}
 %   This package provides a simple infrastructure for recording errata in {\LaTeX}
@@ -419,6 +435,34 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %   corrected) and automatically generate an errata document highlighting the difference
 %   to the published version.
 % \end{abstract}
+%
+% \phantomsection
+% \addcontentsline{toc}{subsection}{Contents}
+%
+% \begin{tcolorbox}[breakable,enhanced jigsaw,title={Contents},fonttitle=\bfseries\Large,
+%   colback=yellow!10!white,colframe=red!50!black,before=\par\bigskip\noindent,
+%   interior style={fill overzoom image=goldshade.png,fill image opacity=0.25},
+%   colbacktitle=red!50!yellow!75!black,
+%   enlargepage flexible=\baselineskip,pad at break*=3mm,
+%   watermark color=yellow!75!red!25!white,
+%   watermark text={\bfseries\Large Contents},
+%   attach boxed title to top center={yshift=-0.25mm-\tcboxedtitleheight/2,yshifttext=2mm-\tcboxedtitleheight/2},
+%   boxed title style={enhanced,boxrule=0.5mm,
+%     frame code={ \path[tcb fill frame] ([xshift=-4mm]frame.west) -- (frame.north west)
+%     -- (frame.north east) -- ([xshift=4mm]frame.east)
+%     -- (frame.south east) -- (frame.south west) -- cycle; },
+%     interior code={ \path[tcb fill interior] ([xshift=-2mm]interior.west)
+%     -- (interior.north west) -- (interior.north east)
+%     -- ([xshift=2mm]interior.east) -- (interior.south east) -- (interior.south west)
+%     -- cycle;}  },
+%   drop fuzzy shadow]
+% \makeatletter
+% \@starttoc{toc}
+% \makeatother
+% \end{tcolorbox}
+%
+% \end{titlepage}
+%
 %
 % \section{Introduction}\label{sec:intro}
 %
@@ -490,11 +534,11 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %   linenumber on the page where the erraum was registered.
 % \end{docKey}
 %
-% \begin{docKey}{styles}{=\meta{style name}}{string, initially default}
-%   The default styling of the errata markup in the errata list and the footnotes is very
+% \begin{docKey}{styles}{=\meta{style name}}{string, initially legacy}
+%   The legacy styling of the errata markup in the errata list and the footnotes is very
 %   simple. This package option can be used to specify one or more predefined styles.
 %   Available styles are:
-%   \colOpt{default}, \colOpt{detailed}, \colOpt{tablelist}.
+%   \colOpt{legacy}, \colOpt{detailed}, \colOpt{tablelist}.
 % \end{docKey}
 %
 %
@@ -568,7 +612,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %
 % \begin{docCommand}{erratumDelete}{\oarg{keys}\marg{desc}\marg{delete}}
 % marks up a correction by deleting the text \meta{delete} with \meta{desc}
-% describing the intended correction.
+% describing the intended correction. Not erratumAdd: \refCom{erratumAdd}
 % \end{docCommand}
 %
 % \begin{docCommand}{erratumReplace}{\oarg{keys}\marg{desc}\marg{old}\marg{new}}
@@ -773,7 +817,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %   Allows changing how the footnotes are formatted.
 %
 % ^^A Include code extracted from the source code
-% {\inputfromcode{default-footnote-format.tex}}
+% {\inputfromcode{legacy-footnote-format.tex}}
 %
 % \end{docCommand}
 %
@@ -782,7 +826,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 % The default format for the errata list is defined with:
 %
 % ^^A Include code extracted from the source code
-% {\inputfromcode{default-erratalist-format.tex}}
+% {\inputfromcode{legacy-erratalist-format.tex}}
 %
 % \end{docCommand}
 %
@@ -801,7 +845,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 % \fi
 % The default format for the keys are as as follows\footnote{This code is defined at \refCode{Default formatters}.}:
 % ^^A Include code extracted from the source code
-% {\inputfromcode{style-default-formats.tex}}
+% {\inputfromcode{style-legacy-formats.tex}}
 %
 %
 % \section{Generating Statistics and Errata Documents}\label{sec:generating}
@@ -862,7 +906,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %
 % \begin{savecodeexample}[gobble=4]{example1.tex}
 %   \documentclass{article}
-%   \usepackage[hide]{errata}
+%   \usepackage[hide]{errata2}
 %   \title{Errata for The Book}
 %   \begin{document}
 %   \maketitle
@@ -953,7 +997,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %
 % \newpage
 % \section{The Implementation}
-%
+% \newgeometry{left=4cm}
 %\iffalse
 %    \begin{macrocode}
 %<*package>
@@ -961,7 +1005,8 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %\fi
 %    \begin{macrocode}
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{errata}[2015/04/16 v1.0 Errata Management]
+\ProvidesPackage{errata2}[2017/12/11 v1.0 Errata Management]
+\def\erratatwopackage2version{1.0}
 \RequirePackage{xifthen}
 \RequirePackage{pgfkeys}
 \RequirePackage{pgffor}
@@ -969,7 +1014,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \RequirePackage{xpatch}
 \RequirePackage{xparse}
 \RequirePackage{xinttools} % defines \xintFor macro
-\RequirePackage[family=@errata@]{strkeyformatter}
+\RequirePackage[family=@errata@]{errata2strkeyformatter}
 \RequirePackage{kvoptions}[2009/07/21]
 %    \end{macrocode}
 % Setup package options
@@ -1087,7 +1132,7 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %\begin{pkgoption}{styles}
 % The |styles| package option
 %    \begin{macrocode}
-\DeclareStringOption[default]{styles}
+\DeclareStringOption[legacy]{styles}
 %    \end{macrocode}
 %\end{pkgoption}
 % \changes{v1.0}{2015/04/16}{defaultargs package option added}
@@ -1128,10 +1173,10 @@ title={\thesection.\thetcbcounter~#2}, #1}
 %    \begin{macrocode}
 \ProcessKeyvalOptions{Errata}
 %% Utility macros
-\input{erratapgfkeysextra}
+\input{errata2pgfkeysextra.sty}
 \NewDocumentCommand{\@errata@requirepackage}{ m }{%
   \@ifpackageloaded{#1}{}{
-    \PackageWarning{errata}{The current errata settings require the #1 package to be loaded.
+    \PackageWarning{errata2}{The current errata settings require the #1 package to be loaded.
       Loading package #1...}
     \RequirePackage{#1}
   }
@@ -1169,12 +1214,6 @@ title={\thesection.\thetcbcounter~#2}, #1}
 \@errata@setvalues[cmdkeys/]{defaultargsreplace/.append style/.expand once={\@errataOpt@defaultargsreplace}}
 \@errata@setvalues[cmdkeys/]{defaultargsdelete/.append style/.expand once={\@errataOpt@defaultargsdelete}}
 \@errata@setvalues[cmdkeys/]{defaultargsnote/.append style/.expand once={\@errataOpt@defaultargsnote}}
-%%
-\AtBeginDocument{%
-  \ifboolexpr{ bool{@errataOpt@linenos} and not test{\@ifpackageloaded{lineno}} } {%
-    \@errata@requirepackage{lineno}
-  }{}
-}
 %%
 \if@errataOpt@show
 \@errataOpt@marginstrue%
@@ -1247,13 +1286,20 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 }
 %    \end{macrocode}
 % \end{macro}
+%
+% \begin{macro}{\errataRegisterFormatKey}
+% Macro for registering a new format key
 %    \begin{macrocode}
 \NewDocumentCommand{\errataRegisterFormatKey}{ m }{%
   \errataset{customformatkeys/.append=#1}%
   \errataset{formatkeys/.append code=#1}%
   \@errata@setcmdkeys{#1}
 }
-%% Set default formater for all keys
+%    \end{macrocode}
+% \end{macro}
+%    \begin{macrocode}
+%%
+%%      Set default formater for all keys
 \SetDefaultKeylistFormat[#1]{listformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{footformats}{\@errata@formatkeys}
 \SetDefaultKeylistFormat[#1]{errformats}{errfmt, eerrbeginfmt, eerrendfmt}
@@ -1282,14 +1328,14 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 %\iffalse
 %    \begin{macrocode}
 %</package>
-%<*erratastyles>
+%<*errata2styles.sty>
 %    \end{macrocode}
 %\fi
 %
-% \begin{docTarget}{Errata default style definition}
-%% Define the default errata formatting
+% \begin{docTarget}{Errata legacy style definition}
+%% Define the legacy errata formatting
 % \end{docTarget}
-% \begin{savecodeexample}{style-default-formats.tex}
+% \begin{savecodeexample}{style-legacy-formats.tex}
 %    \begin{macrocode}
 %%
 \NewDocumentCommand{\erratalistitem}{ m }{\item[#1]}
@@ -1323,7 +1369,7 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
   },
 }
 \errataset{%
-  defaultkeyformats/.style={%
+  legacykeyformats/.style={%
     %% Formats for the footnotes
     footformats/description/.setStrKeyFmt={##1}{~##1},
     footformats/action/.setStrKeyFmt={##1}{~##1},
@@ -1345,34 +1391,34 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 %    \end{macrocode}
 % \end{savecodeexample}
 %
-% \input{style-default-formats.tex}
+% \input{style-legacy-formats.tex}
 %
 %    \begin{macrocode}
-  defaultlistandfootstyle/.code={%
+  legacylistandfootstyle/.code={%
 %    \end{macrocode}
 %
-% \begin{docTarget}{Default formatters}
-%% Define the default format of the errata list and footnotes
+% \begin{docTarget}{Legacy style formatters}
+%% Define the legacy format of the errata list and footnotes
 % \end{docTarget}
-% \begin{savecodeexample}{default-erratalist-format.tex}
+% \begin{savecodeexample}{legacy-erratalist-format.tex}
 %    \begin{macrocode}
     \errataSetListFormat{+erratumlisttarget, +description}
 %    \end{macrocode}
 % \end{savecodeexample}
-% \input{default-erratalist-format.tex}
+% \input{legacy-erratalist-format.tex}
 %
-% \begin{savecodeexample}{default-footnote-format.tex}
+% \begin{savecodeexample}{legacy-footnote-format.tex}
 %    \begin{macrocode}
     \errataSetFootFormat{+description, +actiondescription}
 %    \end{macrocode}
 % \end{savecodeexample}
-% \input{default-footnote-format.tex}
+% \input{legacy-footnote-format.tex}
 %    \begin{macrocode}
   },
-  styles/default/.style={styles/basekeyformats, defaultkeyformats, defaultlistandfootstyle},
+  styles/legacy/.style={styles/basekeyformats, legacykeyformats, legacylistandfootstyle},
 }
 %%
-%% END style: default
+%% END style: legacy
 %%
 %    \end{macrocode}
 % \begin{docTarget}{Errata detailed style definition}
@@ -1479,7 +1525,7 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
     \setcounter{@errata@uniquelistlabels}{4}
   },
   styles/tablelist/.style={liststyletablekeyformats, requirelongtable,
-    defaultlistandfootstyle, liststylefortable},
+    legacylistandfootstyle, liststylefortable},
 }
 %%
 %% END style tablelist
@@ -1487,12 +1533,12 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 %    \end{macrocode}
 %\iffalse
 %    \begin{macrocode}
-%</erratastyles>
+%</errata2styles.sty>
 %<*package>
 %    \end{macrocode}
 %\fi
 %    \begin{macrocode}
-\input{erratastyles}
+\input{errata2styles.sty}
 \errataset{.errataapplystyles/.list={basekeyformats, \@errataOpt@styles}}
 %%
 \DeclareExpandableDocumentCommand{\@errata@htargetname}{ m } {errata#1}%
@@ -2107,6 +2153,6 @@ erratumlabel, erratumname, erratumnamedlink]{formatkeys}% Defines \@errata@forma
 % LocalWords:  Schroll-Fleischer nofoots colors ifmark ignorespaces doctex
 %%% Local Variables:
 %%% fill-column: 79
-%%% TeX-master: "errata.dtx"
+%%% TeX-master: "errata2.dtx"
 %%% End:
 %\fi

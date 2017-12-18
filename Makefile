@@ -1,20 +1,21 @@
-PREFIX = lib
-PACKAGE = errata
-DTX.sty.base = errata
+PREFIX=lib
+PACKAGE=errata2
 
-#%# CUSTOM : Custom document to build to pdf. Default: erratatest
-CUSTOM?=erratatest
-CUSTOM.base = $(CUSTOM)
-CUSTOM.deps := strkeyformatter.sty
+ERRAT2TEST=errata2test
+ERRAT2_TABLE_LINENO=errata_table_lineno
+
+#%# CUSTOM : Custom document to build to pdf. Default: errata2test
+CUSTOM?=$(ERRAT2TEST)
+CUSTOM.deps?=errata2strkeyformatter.sty
 
 #%# VERBOSE : Verbose output from pdflatex (true/false). Default: true
 VERBOSE?=true
 
-BUILD_DIR = build
+BUILD_DIR=build
 
 .DEFAULT_GOAL := help
 
-.builddir:
+.builddir: # Target to ensure ./build dir is created
 	(test -d '$(BUILD_DIR)' || (test -n '$(BUILD_DIR)') && (mkdir -p $(BUILD_DIR))) ; true
 
 all  : ##Build package and doc
@@ -23,6 +24,8 @@ all: .builddir package doc
 package  : ##Build package
 doc      : ##Build doc
 
+
+DTX.sty.base=$(PACKAGE)
 include $(PREFIX)/Makefile.vars.mk
 export TEXINPUTS := $(TEXINPUTS)./build:
 include $(PREFIX)/Makefile.in
@@ -34,8 +37,13 @@ endif
 manual : ##Build PDF manual
 manual: .builddir $(DTX.pdf)
 
-erratatest   : ##Build erratatest.pdf
-erratatest: custompdf
+errata2test   : ##Build errata2test.pdf
+errata2test: custompdf
+	make custompdf CUSTOM=$(ERRAT2TEST)
+
+errata_table_lineno   : ##Build errata_table_lineno.pdf
+errata_table_lineno:
+	make custompdf CUSTOM=$(ERRAT2_TABLE_LINENO)
 
 custompdf   : ##Build erratatest.pdf
 custompdf: .builddir $(DTX.pdf)  $(CUSTOM.pdf)
@@ -51,13 +59,13 @@ CLEAN_BUILD_EXT = log out fdb_latexmk synctex.gz
 
 CLEAN_EXT = $(CLEAN_FINAL_EXT) $(CLEAN_TMP_EXT) $(CLEAN_BUILD_EXT)
 
-CLEAN_BUILT_SRC=*out.pyg* *.sty *-errata.tex erratastyles.tex erratapgfkeysextra.tex
+CLEAN_BUILT_SRC=*out.pyg* *.sty *-errata.tex errata2styles.tex errata2pgfkeysextra.sty
 CLEAN_PREFIX=errata
 
 
 .PHONY: setcleanman setcleantest cleantest cleanman setcleantboxtest
 setcleanman:
-	$(eval CLEAN_PREFIX := errata)
+	$(eval CLEAN_PREFIX := errata2)
 setcleanmanbuild:
 	$(eval CLEAN_PREFIX := build/errata)
 setcleantest:
@@ -65,7 +73,7 @@ setcleantest:
 setcleantestbuild:
 	$(eval CLEAN_PREFIX := build/erratatest)
 docleanext%:
-	@echo "Target cleanext"
+	@echo "Target cleanext!!!!"
 	rm -f $(addprefix $(CLEAN_PREFIX).,$(CLEAN_EXT))
 
 docleantex:
