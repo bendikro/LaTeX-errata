@@ -17,30 +17,35 @@
 \newcommand\IfPackageLoaded[3]{\@ifpackageloaded{#1}{#2}{#3}}%
 \makeatother
 
+\usepackage{titlesec}
+\titleformat{\chapter}
+{\normalfont\LARGE\bfseries}{\thechapter}{1em}{}
+\titlespacing*{\chapter}{0pt}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+
 \usepackage{lineno}
 
-\IfPackageLoaded{lineno}{
-\makeatletter
-% \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
-%\patchcmd{\@startsection}{\@ifstar}{\nolinenumbers\@ifstar}{}{}
-%\patchcmd{\@xsect}{\ignorespaces}{\linenumbers\ignorespaces}{}{}
-\makeatother
-\setpagewiselinenumbers
-\linenumbers
-% Remove the line numbers in the margin when using the lineno package
-\renewcommand{\LineNumber}{}
-% Alternative hack to remove line numbers in margin
-%\modulolinenumbers[100]
-}{
-\newif\ifLineNumbers \LineNumbersfalse %
-\def\nolinenumbers{}
-\def\linenumbers{}
-\def\linenumbers{}
-\def\setpagewiselinenumbers{}
-\def\linelabel#1{}
-\def\lineref#1{}
-\def\modulolinenumbers#1{}
-}
+%\IfPackageLoaded{lineno}{
+%\makeatletter
+%% \patchcmd{<cmd>}{<search>}{<replace>}{<success>}{<failure>}
+%%\patchcmd{\@startsection}{\@ifstar}{\nolinenumbers\@ifstar}{}{}
+%%\patchcmd{\@xsect}{\ignorespaces}{\linenumbers\ignorespaces}{}{}
+%\makeatother
+%\setpagewiselinenumbers
+%\linenumbers
+%% Remove the line numbers in the margin when using the lineno package
+%\renewcommand{\LineNumber}{}
+%% Alternative hack to remove line numbers in margin
+%%\modulolinenumbers[100]
+%}{
+%\newif\ifLineNumbers \LineNumbersfalse %
+%\def\nolinenumbers{}
+%\def\linenumbers{}
+%\def\linenumbers{}
+%\def\setpagewiselinenumbers{}
+%\def\linelabel#1{}
+%\def\lineref#1{}
+%\def\modulolinenumbers#1{}
+%}
 
 \usepackage[bookmarks,breaklinks,pdfpagelabels,
 colorlinks=true,  % Colors links instead of ugly boxes
@@ -63,7 +68,7 @@ nameinlink
 \tcbuselibrary{skins}
 \usetikzlibrary{shadings}
 
-\input{erratadocutil}
+\input{errata2docutil}
 
 \usepackage{tabularx}
 \usepackage[strings]{underscore} % Allow underscores in strings and filenames
@@ -73,6 +78,18 @@ nameinlink
 \setlist*[inlinelist]{%
   label*=\textit{\alph*)},
 }
+
+%
+% \title{Recording Errata in {\LaTeX} Documents\thanks{Version {\fileversion} (last revised
+%        {\filedate})}}
+%    \author{Michael Kohlhase\\
+%            Computer Science, Jacobs University,  Bremen, Germany\\
+%            \url{http://kwarc.info/kohlhase}\\[6mm]Bendik Rønning Opstad\\(bro.devel@gmail.com)}
+% \maketitle
+
+% \author{SKROT}
+% \title{}
+% \maketitle
 
 
 \usepackage[
@@ -93,11 +110,11 @@ uniquelistlabels=0,
 %inlinechanges=false,
 environmenttestmode=2,
 inlinemarks=true,
-%styles={default, detailed, tablelist},
+%styles={legacy, detailed, tablelist},
 %styles={detailed},
 %styles={tablelist, margintcolorboxstyle},
-styles={default},
-]{errata}[2015/04/16]
+styles={legacy},
+]{errata2}[2015/04/16]
 
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
 {\vspace{-4pt}%
@@ -184,16 +201,16 @@ styles={default},
 
 \begin{document}
 
-\erratumAdd[margin=false, foot=true, description={SKROT}]{before chap1}
+\erratumAdd[margin=false, foot=true, description={Description}]{before chap1}
 
 \chapter{Chapter 1}\label{chap-one}
 
 \immediate\typeout{Erratum BEGIN}%
 
 
-\erratumAdd[margin=false, foot=true, description={SKROT}]{In par1}
+\erratumAdd[margin=false, foot=true, description={Description}]{In par1}
 
-\erratumAdd[margin=false, foot=true, description={add}]{In par1}
+\erratumAdd[margin=false, foot=true, description={Added}]{In par1}
 
 
 ERRAT1 CREF: \cref{errata1}
@@ -250,7 +267,7 @@ Delete: A word has been' \erratumDelete{removed} 'removed here, and here' \errat
 
 \erratumNote{Changes to paragraph} \erratumNote{Changes to paragraph}
 
-TEST \linelabel{linetestone} TWO \linelabel{linetesttwo} LINELABELS \lineref{linetestone}, \lineref{linetesttwo} \pageref{linetesttwo}
+%TEST \linelabel{linetestone} TWO \linelabel{linetesttwo} LINELABELS \lineref{linetestone}, \lineref{linetesttwo} \pageref{linetesttwo}
 
 
 \paragraph{TEST paragrah:}

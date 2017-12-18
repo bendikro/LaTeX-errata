@@ -1,12 +1,12 @@
 %%
-%% This is file `erratapgfkeysextra.tex',
+%% This is file `errata2pgfkeysextra.sty',
 %% generated with the docstrip utility.
 %%
 %% The original source files were:
 %%
-%% errata.dtx  (with options: `erratapgfkeysextra.tex')
+%% errata2.dtx  (with options: `errata2pgfkeysextra.sty')
 %% 
-%% Fix setting global values with pgfkeys
+%% These changes add functions (with prefix g) to enable setting global values with pgfkeys
 \long\def\pgfkeysgdef#1#2{%
   \long\def\pgfkeys@temp##1\pgfeov{#2}%
   \global\pgfkeyslet{#1/.@cmd}{\pgfkeys@temp}%
@@ -29,4 +29,4 @@
 \pgfkeys{/handlers/.gestore in/.code={\pgfkeysalso{\pgfkeyscurrentpath/.gcode=\global\edef#1{##1}}}}
 \endinput
 %%
-%% End of file `erratapgfkeysextra.tex'.
+%% End of file `errata2pgfkeysextra.sty'.

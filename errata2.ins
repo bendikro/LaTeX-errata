@@ -1,0 +1,42 @@
+%%
+%% This file generates files required to use the errata2 package.
+%% At your command prompt write
+%%
+%%     latex errata2.ins
+%%
+%% Copyright(c) 2005 Michael Kohlhase
+%% Copyright(c) 2017 Bendik Rønning Opstad
+%%
+%% This file is distributed under the terms of the LaTeX Project Public
+%% License from CTAN archives in directory  macros/latex/base/lppl.txt.
+%% Either version 1.0 or, at your option, any later version.
+%%
+\input docstrip
+
+%\usedir{tex/latex/listings}
+%\keepsilent
+\askforoverwritefalse
+
+\nopreamble
+
+\preamble
+\endpreamble
+
+\generate{
+\file{errata2strkeyformatter.sty}{\from{errata2.dtx}{errata2strkeyformatter.sty}}
+\file{errata2pgfkeysextra.sty}{\from{errata2.dtx}{errata2pgfkeysextra.sty}}
+\file{build/preamble.tex}{\from{errata2.dtx}{preamble.tex}}
+\file{build/errata2docutil.tex}{\from{errata2.dtx}{errata2docutil.tex}}
+\file{errata2linecounter.sty}{\from{errata2.dtx}{errata2linecounter.sty}}
+\file{errata2styles.sty}{\from{errata2.dtx}{errata2styles.sty}}
+\file{errata2.sty}{\from{errata2.dtx}{package}}
+}
+
+\Msg{*}
+\Msg{* You probably need to move the file errata2.sty into a directory searched by TeX.}
+\Msg{*}
+\Msg{* And don't forget to refresh your filename database}
+\Msg{* if your TeX distribution uses such a database.}
+\Msg{*}
+
+\endbatchfile

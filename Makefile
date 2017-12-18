@@ -1,31 +1,32 @@
-PREFIX = lib
-PACKAGE = errata
-DTX.sty.base = errata
+MKPREFIX=lib
+PACKAGE=errata2
+BUILD_DIR=build
 
-#%# CUSTOM : Custom document to build to pdf. Default: erratatest
-CUSTOM?=erratatest
-CUSTOM.base = $(CUSTOM)
-CUSTOM.deps := strkeyformatter.sty
+ERRATA2TEST=errata2test
+ERRATA2_TABLE_LINENO=errata_table_lineno
+
+#%# CUSTOM : Custom document to build to pdf. Default: errata2test
+CUSTOM?=$(ERRATA2TEST)
 
 #%# VERBOSE : Verbose output from pdflatex (true/false). Default: true
 VERBOSE?=true
 
-BUILD_DIR = build
-
 .DEFAULT_GOAL := help
 
-.builddir:
-	(test -d '$(BUILD_DIR)' || (test -n '$(BUILD_DIR)') && (mkdir -p $(BUILD_DIR))) ; true
+.builddir: # Target to ensure ./build dir is created
+	@(test -d '$(BUILD_DIR)' || (test -n '$(BUILD_DIR)') && (mkdir -p $(BUILD_DIR))) ; true
 
 all  : ##Build package and doc
-all: .builddir package doc
+all: .builddir package manual
 
-package  : ##Build package
-doc      : ##Build doc
+package  : ##Build the package files
 
-include $(PREFIX)/Makefile.vars.mk
+DTX.sty.base=$(PACKAGE)
+DTX.deps=$(PACKAGE).sty errata2pgfkeysextra.sty errata2strkeyformatter.sty errata2linecounter.sty errata2styles.sty
+
+include $(MKPREFIX)/Makefile.vars.mk
 export TEXINPUTS := $(TEXINPUTS)./build:
-include $(PREFIX)/Makefile.in
+include $(MKPREFIX)/Makefile.in
 
 ifeq ($(VERBOSE),true)
 PDFLATEX_OPTIONS=
@@ -34,65 +35,75 @@ endif
 manual : ##Build PDF manual
 manual: .builddir $(DTX.pdf)
 
-erratatest   : ##Build erratatest.pdf
-erratatest: custompdf
+test   : ##Build errata2test.pdf
+test: custompdf
+	make custompdf CUSTOM=$(ERRATA2TEST)
 
-custompdf   : ##Build erratatest.pdf
+errata_table_lineno   : ##Build errata_table_lineno.pdf
+errata_table_lineno:
+	make custompdf CUSTOM=$(ERRATA2_TABLE_LINENO)
+
+custompdf   : ##Build custom PDF
 custompdf: .builddir $(DTX.pdf)  $(CUSTOM.pdf)
-	@echo "CUSTOM.deps:" $(CUSTOM.deps)
 
 
-tboxtest: .builddir $(DTX.pdf) tboxtest.tex
-	latexmk  -pdflatex='pdflatex -synctex=1 -file-line-error -shell-escape' -pdf tboxtest
+##################
+# Clean targets
 
-CLEAN_FINAL_EXT = pdf ps dvi
-CLEAN_TMP_EXT = aux listing ind tcbtemp pyg hd idx fls ilg gls glo log out
-CLEAN_BUILD_EXT = log out fdb_latexmk synctex.gz
+CLEAN_TMP_EXT = .aux .listing .ind .tcbtemp .pyg .hd .idx .fls .ilg .gls .glo .toc -errata.tex
+CLEAN_BUILD_EXT = .log .out .fdb_latexmk .synctex.gz
+CLEAN_FINAL_EXT=.pdf .ps .dvi
+CLEAN_EXTRA_EXT=$(CLEAN_FINAL_EXT)
+CLEAN_EXT = $(CLEAN_EXTRA_EXT) $(CLEAN_TMP_EXT) $(CLEAN_BUILD_EXT)
 
-CLEAN_EXT = $(CLEAN_FINAL_EXT) $(CLEAN_TMP_EXT) $(CLEAN_BUILD_EXT)
-
-CLEAN_BUILT_SRC=*out.pyg* *.sty *-errata.tex erratastyles.tex erratapgfkeysextra.tex
-CLEAN_PREFIX=errata
+CLEAN_BUILT_SRC=*out.pyg* $(DTX.deps)
+CLEAN_PREFIX=
 
 
-.PHONY: setcleanman setcleantest cleantest cleanman setcleantboxtest
-setcleanman:
-	$(eval CLEAN_PREFIX := errata)
-setcleanmanbuild:
-	$(eval CLEAN_PREFIX := build/errata)
-setcleantest:
-	$(eval CLEAN_PREFIX := erratatest)
-setcleantestbuild:
-	$(eval CLEAN_PREFIX := build/erratatest)
-docleanext%:
-	@echo "Target cleanext"
-	rm -f $(addprefix $(CLEAN_PREFIX).,$(CLEAN_EXT))
+generate_clean_files%:
+	$(eval CLEAN_FILES=$(foreach NEWCLEANPREFIX,$(CLEANPREFIXES),$(addprefix $(NEWCLEANPREFIX)$(CLEANWILDCARD),$(CLEAN_EXT))))
 
-docleantex:
-	rm -f build/*.tex
+# To be able to call this multiple times, use different names
+cleanfiles%:
+	@echo "Cleaning files: $(CLEAN_FILES)"
+#	@for fname in $(CLEAN_FILES) ; do \
+#        echo " - $$fname" ; \
+#    done
+	rm -f $(CLEAN_FILES)
+
 cleanbuiltsrc: # Cleans the build sources files
-	@echo "Target cleanext"
-	rm -f $(CLEAN_BUILT_SRC)
+cleanbuiltsrc: CLEAN_FILES=$(CLEAN_BUILT_SRC)
+cleanbuiltsrc: cleanfiles1
 
-cleanman: setcleanman docleanext1 setcleanmanbuild docleanext2 docleantex
-cleantest: setcleantest docleanext3 setcleantestbuild docleanext4
+.PHONY: cleanbuildfiles
+cleanbuildfiles: # Cleans files produced when building
+cleanbuildfiles: CLEANWILDCARD=*
+cleanbuildfiles: CLEANPREFIXES=build/ ""
+cleanbuildfiles: generate_clean_files1 cleanfiles2
 
-clean  : ##Clean
-clean: cleanman cleantest
+.PHONY: cleanmanual
+cleanmanual: ##Clean files for errata2 manual
+cleanmanual: CLEANPREFIXES=$(PACKAGE)
+cleanmanual: generate_clean_files2 cleanfiles3
+	rm -rf _minted-$(PACKAGE)
 
-cleanall  : ##Clean files including generated source files
+.PHONY: cleantest
+cleantest: ##Clean errata2test files
+cleantest: CLEANPREFIXES=$(ERRATA2TEST)
+cleantest: generate_clean_files3 cleanfiles4
+	rm -rf _minted-$(ERRATA2TEST)
+
+.PHONY: clean
+clean: ##Clean
+clean: CLEAN_EXTRA_EXT=
+clean: cleanmanual cleantest cleanbuildfiles
+
+.PHONY: cleanall
+cleanall: ##Clean files including generated source files
+cleanall: CLEAN_EXTRA_EXT=$(CLEAN_FINAL_EXT)
 cleanall: clean cleanbuiltsrc
-	rm -f $(addprefix *.,$(CLEAN_TMP_EXT)) *-errata.tex
+	rm -rf ./build/
 
-cleandist : ##Clean everything
-cleandist: clean cleanbuiltsrc
-	rm -f *.aux *.ind *.gls *.ps *.dvi *.toc *.xml *.omdoc *.thm *.pdf
-	rm -Rf auto
-
-setcleantboxtest:
-	$(eval CLEAN_PREFIX := tboxtest)
-
-cleantboxtest: setcleantboxtest docleanext5
 
 .PHONY: help
 help            : ##Show this help
