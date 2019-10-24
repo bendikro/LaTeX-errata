@@ -104,7 +104,7 @@ defaultargs={margin=true,foot=true},
 %defaultargsadd={margin=false},
 %defaultargsdelete={margin=false},
 defaultargsnote={inlinechange=false},
-requirecmddescription=false,
+legacymode=false,
 %marginnote=false,
 uniquelistlabels=0,
 %inlinechanges=false,
@@ -113,7 +113,8 @@ inlinemarks=true,
 %styles={legacy, detailed, tablelist},
 %styles={detailed},
 %styles={tablelist, margintcolorboxstyle},
-styles={legacy},
+%styles={legacy},
+styles={detailed},
 ]{errata2}[2015/04/16]
 
 \errataSetKeyFormat[#1+#2]{marginfmt/marginnote}{%
@@ -149,45 +150,6 @@ styles={legacy},
   \fi
 }
 
-% Example on changing the table styling
-\errataset{%
-  customliststyletablekeyformats/.style={%
-    listformats/lineref/.setStrKeyFmt={##1}{~(L \lineref{##1})},
-    %%
-    listformats/erratalistbegin/.setStrKeyFmt={##1}{%
-      \setlength\LTleft{-1cm}
-      \setlength\LTright{-1cm}
-      \makeatletter%
-      \begin{longtable}{ c@{\tcolsep{1.7}} c@{\tcolsep{2}} c p{15em} l c }%
-        & Title & Type & Action & Page
-       },
-      listformats/erratalistend/.setStrKeyFmt={##1}{\end{longtable}\makeatother},
-    actionformat/replace/.setStrKeyFmt={##1+##2}{ ##2 \shortarrow ##1},
-    actionformat/add/.setStrKeyFmt={##1}{ ##1 },
-    actionformat/delete/.setStrKeyFmt={##1}{##1},
-    actionformat/note/.setStrKeyFmt={##1}{ ##1},
-    footformats/erratumcustomlocation/.setStrKeyFmt={##1+##2}{ P:\pageref{##1} (L \lineref{##2})},
-    listformats/erratumcustomlocation/.setStrKeyFmt={##1+##2}{\pageref{##1} (L \lineref{##2})},
-    setCmdKeyArgsGetTwo={erratumcustomlocation}{##1+##2}{{pageref}+{lineref}},
-  },
-  customliststylefortable/.code={
-    \errataSetListFormat{+erratumlistitemtitle,+erratumlisttarget,%
-      \noexpand\errataamersand,+erratumnamedlink,\noexpand\errataamersand,%
-      +action,\noexpand\errataamersand,+actiondescription,\noexpand\errataamersand,%
-      -erratumcustomlocation}%
-    \errataSetFootFormat{+description, +actiondescription, -erratumcustomlocation}
-    \setcounter{@errata@uniquelistlabels}{4}
-    \usepackage{stmaryrd}
-    \newcommand{\shortarrow}{\ensuremath{\vrule height 2\fontdimen22\textfont2 width 0pt\shortrightarrow}}
-    \newcommand{\tcolsep}[1]{\hspace{##1em}}
-    \errataRegisterFormatKey{erratumcustomlocation}
-  },
-  styles/customtablelist/.style={styles/tablelist, customliststyletablekeyformats,
-    customliststylefortable},
-}
-
-\errataset{.errataapplystyles/.list={customtablelist}}
-
 \makeatother
 
 \newlength{\namelen}
@@ -201,14 +163,14 @@ styles={legacy},
 
 \begin{document}
 
-\erratumAdd[margin=false, foot=true, description={Description}]{before chap1}
+\erratumAdd[margin=false, foot=true, description={First forrection}]{before chap1}
 
 \chapter{Chapter 1}\label{chap-one}
 
 \immediate\typeout{Erratum BEGIN}%
 
 
-\erratumAdd[margin=false, foot=true, description={Description}]{In par1}
+\erratumAdd[margin=false, foot=true, description={Second correction}]{In par1}
 
 \erratumAdd[margin=false, foot=true, description={Added}]{In par1}
 
@@ -221,7 +183,7 @@ ERR1 LINE NUMBER: \lineref{erratalineno1}.
 
 
 Therefore, the'
-\erratumReplace[id={testid}, type={Correction}, description={grammar}, reported-by=bro]{results}{result}'
+\erratumReplace[id={testid}, type={Correction}, description={Fix typo}, reported-by=bro]{results}{result}'
 
 \section{Section 1.1}\label{sect-one}
 
@@ -288,7 +250,7 @@ SECT1: \cref{sect-one}
 SECT1PREF \cpageref{sect-one}
 
 
-\erratumReplace[id={testid}, description={grammar}]{tulls}{tull}
+\erratumReplace[id={testid}, description={Fix typo}]{tulls}{tull}
 ,\erratumAdd[id={testid}, type={Addition}, date={2015/03/18}]{added},
 
 
@@ -302,17 +264,17 @@ SUBSECT1.1: \cref{subsect-one} (\getCurrentSectionNumber)
 \erratumAdd[inlinemark=false]{noinline}
 
 
-\erratumReplace[type={grammar}, description={Fix gramar}]{in}{of}
+\erratumReplace[type={grammar}, description={Fix grammar}]{in}{of}
 
 \subsubsection{Subsubsection 1.1.1}\label{subsubsect-one}
 
-\erratumAdd[id={testid}, description={grammar}]{insubsubsect}
+\erratumAdd[id={testid}, description={Fix grammar}]{insubsubsect}
 
 SUBSUBSECT1: \cref{subsubsect-one} (\getCurrentSectionNumber)
 
 \paragraph{Paragraph 1}\label{par-one}
 
-\erratumAdd[id={testid}, description={grammar}]{inparagraph}
+\erratumAdd[id={testid}, description={Fix grammar}]{inparagraph}
 
 PAR1: \cref{par-one}  (\getCurrentSectionNumber)
 
@@ -323,7 +285,7 @@ ERR1 ref: \ref{errata1}
 
 \subsubsection{Subsubsection 1.1.2}\label{subsubsect-two}
 
-\erratumAdd[id={testid}, description={grammar}]{insubsubsecttwo}
+\erratumAdd[id={testid}, description={Fix grammar}]{insubsubsecttwo}
 
 SUBSUBSECT2: \cref{subsubsect-two} (\getCurrentSectionNumber)
 
@@ -332,7 +294,7 @@ SUBSUBSECT2: \cref{subsubsect-two} (\getCurrentSectionNumber)
 
 SECT2: \cref{subsect-two}
 
-\erratumAdd[id={testid}, description={grammar}]{insubsect2}
+\erratumAdd[id={testid}, description={Fix grammar}]{insubsect2}
 
 
 
@@ -367,18 +329,19 @@ SECT1: \cref{subsect-one}
 
 SECT2.1: \cref{sect-two-one}  (\getCurrentSectionNumber)
 
-\erratumAdd[inlinemark=true]{inlinemark}
+inlinemark: \erratumAdd[inlinemark=true,inlinechange=false]{inlinemark}
+
+inlinechange: \erratumAdd[inlinemark=false,inlinechange=true]{inlinechange}
 
 
 Here we have removed \erratumDelete[id={testid}, type={Deletion}]{removed} a word.
 
 ERRATA35 pref: \pageref{erratalineno35}, lineref: \lineref{erratalineno35}
 
-\erratumAdd{In this experiment, they are limited to bundle one previous segment.}
-
+\erratumAdd{In this experiment, they are limited to bundle one previous segment.}\newline
 
 \begin{erratum}[date=2006-07-19,reported-by=Michael Kohlhase,margin=true,
-marginargs={colframe=blue!50!white}]{old should be new}
+marginargs={colframe=blue!50!white},foot=true,description=Desc]
 this is a test of a long erratum
 \begin{enumerate}
   \item We can replace \eReplace{oldtext}{newtext}

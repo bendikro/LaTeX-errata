@@ -29,6 +29,34 @@
     actionformat/delete/.setStrKeyFmt={##1}{##1},
     actionformat/replace/.setStrKeyFmt={##1+##2}{ ##2 --> ##1},
     %%
+    % $_d^{\@errata@env@themark}$
+    % inlinemarkformat/.setStrKeyFmt={##1+##2}{FMT $_##1^{##2}$ },
+    inlinemarkformat/.setStrKeyFmt={##1+##2}{FMT \ensuremath{##1^{##2}} },
+    inlinemarkformats/beginfmt/.setStrKeyFmt={##1}{[},
+    inlinemarkformats/endfmt/.setStrKeyFmt={##1}{]},
+    inlinemarkformats/valuefmt/.setStrKeyFmt={##1}{|##1|},
+    inlinemarkformats/markfmt/.setStrKeyFmt={##1+##2}{\ensuremath{##1^{##2}}},
+    %inlinemarkformats/markvalue/.setStrKeyFmt={##1}{|-##1|},
+    %\SetDefaultKeylistFormat[#1]{inlinemarkformats}{beginfmt, endfmt, markfmt, valuefmt, markbegin, markvalue, markend, marknote}
+    inlinemarkformats/markvalue/.initial={fan},
+    inlinemarkformats/markvalue/.setStrKeyFmt={##1}{|##1|},
+    inlinemarkformats/markbegin/.initial={},
+    %markbegin, markvalue, markend, marknote,
+    %
+    %
+    % inlinemarkformat/add/.setStrKeyFmt={##1+##2}{ $_##1^{##2}$ },
+    %inlinemarkformat/delete/.setStrKeyFmt={##1}{##1},
+    %inlinemarkformat/replace/.setStrKeyFmt={##1+##2}{ ##2 --> ##1},
+    %inlinemarkformat/note/.setStrKeyFmt={##1}{ ##1},
+    %%
+    inlinemarkchar/add/.setStrKeyFmt={##1}{a},
+    inlinemarkchar/delete/.setStrKeyFmt={##1}{d},
+    inlinemarkchar/note/.setStrKeyFmt={##1}{n},
+    inlinemarkchar/replace/.setStrKeyFmt={##1}{r},
+    %inlinemark/begin/.setStrKeyFmt={##1}{[},
+    %inlinemark/end/.setStrKeyFmt={##1}{]},
+    %inlinemark/end/.setStrKeyFmt={##1}{[##1]},
+    %%
     listformats/erratumlabel/.setStrKeyFmt={##1}{\@errata@labelname},
     listformats/erratumlistitem/.setStrKeyFmt={##1}{\erratalistitem{##1}},
     listformats/erratumlisttarget/.setStrKeyFmt={##1}{\@errata@htargeterratum{##1}{}},
@@ -44,6 +72,10 @@
     footformats/description/.setStrKeyFmt={##1}{~##1},
     footformats/action/.setStrKeyFmt={##1}{~##1},
     footformats/actiondescription/.setStrKeyFmt={##1}{~##1},
+    %%
+    %inlinemarkformats/begin/.setStrKeyFmt={##1}{~##1},
+    %inlinemarkformats/end/.setStrKeyFmt={##1}{~##1},
+    %inlinemarkformats/actiondescription/.setStrKeyFmt={##1}{~##1},
     %% Set the format for the action description for each erratum command
     actionformat/add/.setStrKeyFmt={##1}{ (added text)},
     actionformat/delete/.setStrKeyFmt={##1}{(deleted ``##1'')},
@@ -105,6 +137,7 @@
   detailedlistandfootstyle/.code={%
     \errataSetListFormat{+erratumlisttarget, +pageref, +action, -description, -date, +actiondescription}
     \errataSetFootFormat{+action, -description,:, +actiondescription}
+    \errataSetInlineMarkFormat{+beginfmt, +markvalue, +valuefmt, +endfmt, +marknote}
   },
   detailedstylesetupcode/.code={%
     \newlength{\@errata@listindent}

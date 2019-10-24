@@ -59,10 +59,10 @@
 \NewDocumentCommand{\StrKeyFmtgetformattedef}{ m m m }{% key, args, macroname
   \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expanded}{#2}{#3}}%
 }
-\NewDocumentCommand{\StrKeyFmtgetformattedee}{ m m m }{% key, args, macroname
+\NewDocumentCommand{\StrKeyFmtgetformattedetwice}{ m m m }{% key, args, macroname
   \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expand twice}{#2}{#3}}%
 }
-\NewDocumentCommand{\StrKeyFmtgetformattedeo}{ m m m }{% key, args, macroname
+\NewDocumentCommand{\StrKeyFmtgetformattedeonce}{ m m m }{% key, args, macroname
   \@StrKeyFmt@set{#1/.@StrKeyFmt@getformatted={#1}{/.expand once}{#2}{#3}}%
 }
 \NewDocumentCommand{\StrKeyFmtgetformatted}{ m m m }{% key, args, macroname
@@ -105,7 +105,7 @@
       %% If the key is prefixed with \@StrKeyFmtOpt@notemptyprefix, and the value is empty, it's ignored
       \ifboolexpr{ test{\IfBeginWith{##9}{\@StrKeyFmtOpt@evenemptyprefix}}
         or not test{\ifthenelse{\equal{\@StrKeyFmt@tmpvalue}{}}}} {%
-        \StrKeyFmtgetformattedeo{#2/\@StrKeyFmt@tmp@right}{\@StrKeyFmt@tmpvalue}{\@StrKeyFmt@tmp@fmtvalue}%
+        \StrKeyFmtgetformattedeonce{#2/\@StrKeyFmt@tmp@right}{\@StrKeyFmt@tmpvalue}{\@StrKeyFmt@tmp@fmtvalue}%
         \@StrKeyFmt@set{formateroutputt/.append/.expand once={\@StrKeyFmt@tmp@fmtvalue}}%
       }{}%
     }{% Not a key

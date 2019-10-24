@@ -3,6 +3,7 @@ PACKAGE=errata2
 BUILD_DIR=build
 
 ERRATA2TEST=errata2test
+ERRATA2TESTLEGACY=errata2testlegacy
 ERRATA2_TABLE_LINENO=errata_table_lineno
 
 #%# CUSTOM : Custom document to build to pdf. Default: errata2test
@@ -38,6 +39,10 @@ manual: .builddir $(DTX.pdf)
 test   : ##Build errata2test.pdf
 test: custompdf
 	make custompdf CUSTOM=$(ERRATA2TEST)
+
+testlegacy   : ##Build errata2testlegacy.pdf
+testlegacy: custompdf
+	make custompdf CUSTOM=$(ERRATA2TESTLEGACY)
 
 errata_table_lineno   : ##Build errata_table_lineno.pdf
 errata_table_lineno:
